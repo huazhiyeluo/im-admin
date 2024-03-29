@@ -303,7 +303,7 @@ const initWebsocket = () => {
 const onOpen = (event: any) => {
     console.log("WebSocket connection opened", event);
     // 连接成功时清除重连定时器
-    if (reconnectTimer) {
+    if (reconnectTimer.value) {
         clearTimeout(reconnectTimer.value);
     }
 }

@@ -14,7 +14,7 @@ const alias: Record<string, string> = {
 // https://vitejs.dev/config/
 const viteConfig = defineConfig((mode: ConfigEnv) => {
   const env = loadEnv(mode.mode, process.cwd());
-  const a = {
+  return {
     plugins: [
       vue(),
     ],
@@ -36,8 +36,6 @@ const viteConfig = defineConfig((mode: ConfigEnv) => {
       }
     }
   }
-  console.log(a)
-  return a
 })
 
 

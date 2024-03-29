@@ -13,7 +13,7 @@ export const Local = {
     },
     // 获取永久缓存
     get(key: string) {
-        let json = <string>window.localStorage.getItem(key);
+        const json = <string>window.localStorage.getItem(key);
         return JSON.parse(json);
     },
     // 移除永久缓存
@@ -43,7 +43,7 @@ export const Session = {
     // 获取临时缓存
     get(key: string) {
         if (key === 'token' || key === 'sessionKey') return Cookies.get(key);
-        let json = <string>window.sessionStorage.getItem(key);
+        const json = <string>window.sessionStorage.getItem(key);
         return JSON.parse(json);
     },
     // 移除临时缓存
