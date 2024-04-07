@@ -358,6 +358,10 @@ const onMessage = (event: any) => {
         if (inArray(data.MsgMedia, [30, 31, 32, 33, 34])) {
             loadGroupManage(data)
         }
+    } else if (inArray(data.MsgType, [4])) {
+        if (inArray(data.MsgMedia, [0, 1, 2, 3, 4 ,5])) {
+            loadTalkManage(data)
+        }
     }
 }
 
@@ -395,6 +399,11 @@ const loadGroupManage = (data: any) => {
         }
     }
     GroupRef.value.loadUserManage(data)
+}
+
+// 5、消息管理
+const loadTalkManage = (data: any) => {
+    TalkRef.value.loadTalkManage(data)
 }
 
 
