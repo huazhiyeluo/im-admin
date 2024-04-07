@@ -22,21 +22,23 @@
                 </van-badge>
             </template>
             <template #right v-if="state.showType == 1">
-                <van-popover  placement="bottom-end" v-model:show="state.showFriendPopover" :actions="state.friendActions" @select="onFriendSelect">
+                <van-popover placement="bottom-end" v-model:show="state.showFriendPopover"
+                    :actions="state.friendActions" @select="onFriendSelect">
                     <template #reference>
                         <van-icon name="ellipsis" size="18" />
                     </template>
-                </van-popover>                
+                </van-popover>
             </template>
             <template #right v-if="state.showType == 2">
-                <van-popover  placement="bottom-end" v-model:show="state.showGroupPopover" @open="onGroupOpen" :actions="state.groupActions" @select="onGroupSelect">
+                <van-popover placement="bottom-end" v-model:show="state.showGroupPopover" @open="onGroupOpen"
+                    :actions="state.groupActions" @select="onGroupSelect">
                     <template #reference>
                         <van-icon name="ellipsis" size="18" />
                     </template>
-                </van-popover>                
+                </van-popover>
             </template>
             <template #right v-if="state.showType == 5">
-                <van-icon name="brush-o" size="18" @click="clearMsg" />            
+                <van-icon name="brush-o" size="18" @click="clearMsg" />
             </template>
         </van-nav-bar>
         <van-tabbar v-if="state.showType == 0" v-model="state.tabActiveName" @change="changeTabbar">
@@ -52,8 +54,9 @@
         <PersonComponent v-show="state.tabActiveName == 'person' && state.showType == 0" ref="PersonRef"
             @update-parameter="childOperatePerson" />
 
-        <TalkComponent v-show="(state.showType == 1 || state.showType == 2)" ref="TalkRef" @update-parameter="childOperateTalk"
-            :socket="state.socket" :db="state.db" :talkData="state.talkData" />
+        <TalkComponent v-show="(state.showType == 1 || state.showType == 2)" ref="TalkRef"
+            @update-parameter="childOperateTalk" @update-parameter-go-phone="childOperateGoPhone" :socket="state.socket"
+            :db="state.db" :talkData="state.talkData" />
 
         <PersonUserComponent v-show="state.showType == 3" ref="PersonUserRef"
             @update-parameter="childOperatePersonUser" />
@@ -62,35 +65,46 @@
             @update-parameter="childOperatePersonGroup" />
 
         <MsgComponent v-show="state.showType == 5" ref="MsgRef" @update-parameter="childOperateMsg" :db="state.db" />
+
+        <PhoneComponent v-show="state.isShowPhone" ref="PhoneRef" @update-parameter="childOperatePhone"
+            @update-parameter-go-phone-request="childOperateGoPhoneRequest"
+            @update-parameter-go-phone-response="childOperateGoPhoneResponse" @update-parameter-send="sendMessage"
+            :db="state.db" :phoneData="state.phoneData" :talkData="state.talkData" />
+
+
     </div>
 </template>
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick, defineAsyncComponent } from 'vue'
-import { showConfirmDialog,showSuccessToast,showFailToast } from 'vant';
+import { showConfirmDialog, showSuccessToast, showFailToast } from 'vant';
 import { Session } from '@/utils/storage';
 import { openDB, getItemById, getByIndex } from '@/utils/indexedDB';
 import type { MyDatabase } from '@/utils/indexedDB';
-import type { UserInfo } from '@/utils/schema';
-import { getGroupUser,delFriend,quitGroup } from '@/api/index';
+import type { MsgData, UserInfo } from '@/utils/schema';
+import { getGroupUser, delFriend, quitGroup } from '@/api/index';
 import { saveGroupUser, saveUser } from '@/utils/dbsave';
 
 import { useRouter } from 'vue-router';
 import { showNotify } from 'vant';
 import { inArray } from '@/utils/common';
+import { stat } from 'fs';
 const router = useRouter();
 
 const FriendComponent = defineAsyncComponent(() => import('@/views/chat/friend.vue'));
 const GroupComponent = defineAsyncComponent(() => import('@/views/chat/group.vue'));
 const TalkComponent = defineAsyncComponent(() => import('@/views/chat/talk.vue'));
 const MsgComponent = defineAsyncComponent(() => import('@/views/chat/msg.vue'));
+const PhoneComponent = defineAsyncComponent(() => import('@/views/chat/phone.vue'));
 const PersonComponent = defineAsyncComponent(() => import('@/views/user/person.vue'));
 const PersonUserComponent = defineAsyncComponent(() => import('@/views/user/user.vue'));
 const PersonGroupComponent = defineAsyncComponent(() => import('@/views/user/group.vue'));
+
 
 const TalkRef = ref();
 const FriendRef = ref();
 const GroupRef = ref();
 const MsgRef = ref();
+const PhoneRef = ref();
 
 
 const heartbeatTimer = ref<NodeJS.Timeout | number>(0);
@@ -113,16 +127,20 @@ const state = reactive({
         name: "",
         icon: "",
     },
-    showFriendPopover:false,
-    friendActions:[
+    showFriendPopover: false,
+    friendActions: [
         { text: '删除好友', icon: 'delete-o' },
         { text: '清空记录', icon: 'brush-o' },
     ],
-    showGroupPopover:false,
-    groupActions:[
+    showGroupPopover: false,
+    groupActions: [
         { text: '退出群聊', icon: 'delete-o' },
         { text: '清空记录', icon: 'brush-o' },
     ],
+    isShowPhone: false,
+    phoneData: {
+        showType: 0,
+    }
 });
 
 onMounted(() => {
@@ -144,7 +162,6 @@ onUnmounted(() => {
 const handleVisibilityChange = () => {
     // 更新 isPageVisible 的值为当前页面的可见状态
     isPageVisible.value = !document.hidden;
-
     // 如果页面变为可见，可以在这里执行一些操作
     if (isPageVisible.value) {
         console.log('页面已变为可见');
@@ -177,7 +194,7 @@ const init = async () => {
         { name: 'group_members', keyPath: 'Id', indexes: [{ name: 'GroupId', keyPath: 'GroupId' }, { name: 'MemberId', keyPath: 'MemberId' }] },
         { name: 'users', keyPath: 'Uid', indexes: [{ name: 'Uid', keyPath: 'Uid', options: { unique: true } }] },
         { name: 'message', keyPath: 'Id', indexes: [{ name: 'CreateTime', keyPath: 'CreateTime' }, { name: 'FromId', keyPath: 'FromId' }, { name: 'ToId', keyPath: 'ToId' }, { name: 'MsgType', keyPath: 'MsgType' }] },
-        { name: 'apply', keyPath: 'Id', indexes: [{ name: 'OperateTime', keyPath: 'OperateTime' },{ name: 'Type', keyPath: 'Type' }] },
+        { name: 'apply', keyPath: 'Id', indexes: [{ name: 'OperateTime', keyPath: 'OperateTime' }, { name: 'Type', keyPath: 'Type' }] },
     ];
     state.db = await openDB(dbName, version, objectStores);
     saveUser(state.db, { Uid: state.selftUserInfo.Uid, Username: state.selftUserInfo.Username, Avatar: state.selftUserInfo.Avatar, IsOnline: true })
@@ -206,32 +223,32 @@ const goMsg = () => {
 }
 
 // --------------------------------------------------------------------- friend ------------------------------------------------------------------------
-const onFriendSelect = async (action:any , index:number) => {
-    console.log("onFriendSelect",action,index)
-    if (index == 0){
-        onFriendDel(state.selftUserInfo.Uid,state.talkData.toId)
+const onFriendSelect = async (action: any, index: number) => {
+    console.log("onFriendSelect", action, index)
+    if (index == 0) {
+        onFriendDel(state.selftUserInfo.Uid, state.talkData.toId)
     }
-    if (index == 1){
-        onFriendClear(state.selftUserInfo.Uid,state.talkData.toId)
+    if (index == 1) {
+        onFriendClear(state.selftUserInfo.Uid, state.talkData.toId)
     }
 }
 
-const onFriendDel = (fromId:number , toId:number) => {
-    showConfirmDialog({title: '删除好友',message:`是否删除:${state.talkData.name}?`})
-    .then(() => {
-        delFriend({fromId:fromId,toId:toId}).then((response: any) => {
-            if (response.code == 0) {
-                showSuccessToast('删除成功');
-                clickLeft()
-            } else {
-                showFailToast(response.msg);
-            }
+const onFriendDel = (fromId: number, toId: number) => {
+    showConfirmDialog({ title: '删除好友', message: `是否删除:${state.talkData.name}?` })
+        .then(() => {
+            delFriend({ fromId: fromId, toId: toId }).then((response: any) => {
+                if (response.code == 0) {
+                    showSuccessToast('删除成功');
+                    clickLeft()
+                } else {
+                    showFailToast(response.msg);
+                }
+            });
         });
-    });
 }
 
-const onFriendClear = (fromId:number , toId:number) => {
-    TalkRef.value.clearMessage(1,fromId,toId)
+const onFriendClear = (fromId: number, toId: number) => {
+    TalkRef.value.clearMessage(1, fromId, toId)
 }
 
 // --------------------------------------------------------------------- group ------------------------------------------------------------------------
@@ -241,38 +258,38 @@ const onGroupOpen = async () => {
     }
     state.groupActions[0].text = "退出群聊"
     const temp = await getItemById(state.db, "groups", state.talkData.toId)
-    if (temp.OwnerUid == state.selftUserInfo.Uid){
+    if (temp.OwnerUid == state.selftUserInfo.Uid) {
         state.groupActions[0].text = "解散群聊"
     }
 }
 
-const onGroupSelect = async (action:any , index:number) => {
-    console.log("onFriendSelect",action,index)
-    if (index == 0){
-        onGroupQuit(state.selftUserInfo.Uid,state.talkData.toId)
+const onGroupSelect = async (action: any, index: number) => {
+    console.log("onFriendSelect", action, index)
+    if (index == 0) {
+        onGroupQuit(state.selftUserInfo.Uid, state.talkData.toId)
     }
-    if (index == 1){
-        onGroupClear(state.selftUserInfo.Uid,state.talkData.toId)
+    if (index == 1) {
+        onGroupClear(state.selftUserInfo.Uid, state.talkData.toId)
     }
 }
 
-const onGroupQuit = (fromId:number , toId:number) => {
-    showConfirmDialog({title: '退出群',message:`是否退出:${state.talkData.name}群?`})
-    .then(() => {
-        quitGroup({fromId:fromId,toId:toId}).then((response: any) => {
-            if (response.code == 0) {
-                showSuccessToast('退出成功');
-                clickLeft()
-            } else {
-                showFailToast(response.msg);
-            }
+const onGroupQuit = (fromId: number, toId: number) => {
+    showConfirmDialog({ title: '退出群', message: `是否退出:${state.talkData.name}群?` })
+        .then(() => {
+            quitGroup({ fromId: fromId, toId: toId }).then((response: any) => {
+                if (response.code == 0) {
+                    showSuccessToast('退出成功');
+                    clickLeft()
+                } else {
+                    showFailToast(response.msg);
+                }
+            });
         });
-    });
 }
 
 
-const onGroupClear = (fromId:number , toId:number) => {
-    TalkRef.value.clearMessage(2,fromId,toId)
+const onGroupClear = (fromId: number, toId: number) => {
+    TalkRef.value.clearMessage(2, fromId, toId)
 }
 // --------------------------------------------------------------------- msg ------------------------------------------------------------------------
 
@@ -333,8 +350,8 @@ const heartbeat = () => {
         return
     }
     if (state.socket.readyState == 1) {
-        const content = { "Data": "心跳" }
-        TalkRef.value.sendMessage({ FromId: state.selftUserInfo.Uid, Content: content, MsgMedia: 0, MsgType: 0 })
+        const content =
+            sendMessage({ FromId: state.selftUserInfo.Uid, Content: { "Data": "心跳" }, MsgMedia: 0, MsgType: 0 })
     }
 }
 
@@ -359,8 +376,8 @@ const onMessage = (event: any) => {
             loadGroupManage(data)
         }
     } else if (inArray(data.MsgType, [4])) {
-        if (inArray(data.MsgMedia, [0, 1, 2, 3, 4 ,5])) {
-            loadTalkManage(data)
+        if (inArray(data.MsgMedia, [0, 1, 2, 3, 4, 5])) {
+            loadPhoneManage(data)
         }
     }
 }
@@ -402,8 +419,8 @@ const loadGroupManage = (data: any) => {
 }
 
 // 5、消息管理
-const loadTalkManage = (data: any) => {
-    TalkRef.value.loadTalkManage(data)
+const loadPhoneManage = (data: any) => {
+    PhoneRef.value.loadPhoneManage(data)
 }
 
 
@@ -421,9 +438,6 @@ const childOperateFriend = async (msgType: number, toId: number) => {
         name: temp.Username,
         icon: temp.Avatar
     }
-
-    console.log(state.talkData)
-
     state.showType = 1
 }
 
@@ -439,8 +453,6 @@ const childOperateGroup = async (msgType: number, toId: number) => {
         icon: temp.Icon
     }
 
-    console.log(state.talkData)
-
     const contacts = await getByIndex(state.db, "group_members", 'GroupId', toId)
     if (contacts.length == 0) {
         const response = await getGroupUser({ groupId: toId });
@@ -453,6 +465,23 @@ const childOperateGroup = async (msgType: number, toId: number) => {
 
 const childOperateTalk = () => {
     initWebsocket()
+}
+
+//拨打电话
+const childOperateGoPhone = async (toId: number) => {
+    console.log("childOperateGoPhone", toId)
+    if (!state.db) {
+        return
+    }
+    const temp = await getItemById(state.db, "users", toId)
+    state.talkData = {
+        msgType: 1,
+        toId: toId,
+        name: temp.Username,
+        icon: temp.Avatar
+    }
+    state.isShowPhone = true
+    PhoneRef.value.goPhone()
 }
 
 const childOperatePerson = (editType: number, title: string) => {
@@ -477,6 +506,36 @@ const childOperatePersonGroup = () => {
 
 const childOperateMsg = () => {
     state.showType = 0
+}
+
+const childOperatePhone = () => {
+
+}
+
+const sendMessage = (data: MsgData) => {
+    TalkRef.value.sendMessage(data)
+}
+
+//收到电话请求
+const childOperateGoPhoneRequest = async (toId: number) => {
+    console.log("childOperateGoPhone", toId)
+    if (!state.db) {
+        return
+    }
+    const temp = await getItemById(state.db, "users", toId)
+    state.talkData = {
+        msgType: 1,
+        toId: toId,
+        name: temp.Username,
+        icon: temp.Avatar
+    }
+    state.isShowPhone = true
+}
+
+//收到电话响应（接通）
+const childOperateGoPhoneResponse = async () => {
+    console.log("childOperateGoPhoneResponse")
+    state.showType = 1
 }
 
 
