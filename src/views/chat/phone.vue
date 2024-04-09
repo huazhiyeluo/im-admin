@@ -112,6 +112,10 @@ const quitPhone = async () => {
     state.showType = 0;
     leave()
     emit("update-parameter-phone-send" , { Content: { Data: "" }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 1, MsgType: 4 });
+
+    const content = { "Data": "挂断电话" }
+    emit("update-parameter-phone-send" , { Content: content, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 13, MsgType: 1 });
+
 }
 
 //2-2、挂断语音通话(接通)

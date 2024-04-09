@@ -91,6 +91,29 @@ const loadFriendStatus = (data: any) => {
   }
 }
 
+//用户信息
+const loadFriendInfo = async (data: any) => {
+  const res = JSON.parse(data.Content.Data);
+  if (res.user.Uid !== state.selftUserInfo.Uid) { 
+    const existingIndex = state.friends.findIndex(obj => obj.Uid === res.user.Uid);
+
+    const temp = await getItemById(props.db, "users", res.user.Uid)
+    if (temp) {
+      res.user.OperateTime = temp.OperateTime
+      res.user.Tips = temp.Tips
+      res.user.MsgMedia = temp.MsgMedia
+      res.user.Content = temp.Content
+    }
+
+    if (existingIndex !== -1) {
+      state.friends[existingIndex] = res.user;
+    } else {
+      state.friends.unshift(res.user);
+    }
+  }
+  saveUser(props.db, res.user);
+}
+
 const loadFriendManage = (data: any) => {
   const res = JSON.parse(data.Content.Data);
   if (res.user) {
@@ -102,6 +125,8 @@ const loadFriendManage = (data: any) => {
     }
   }
 }
+
+
 
 const loadFriendManageAgree = (res: any) => {
   const existingIndex = state.friends.findIndex(obj => obj.Uid === res.user.Uid);
@@ -158,6 +183,7 @@ const getContent = (item: FriendData) => {
       return '[表情]';
     case 10:
     case 11:
+    case 13:
       return '[语音通话]' + item.Content.Data;
     case 12:
       return '[语音通话]通话时长: ' + formatSeconds(item.Content.Data);
@@ -182,6 +208,7 @@ const goChat = async (toId: number) => {
 // 暴露变量
 defineExpose({
   loadFriendStatus,
+  loadFriendInfo,
   loadFriendManage,
   loadFriendMsg
 });

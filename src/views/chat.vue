@@ -3,11 +3,7 @@
         <van-nav-bar border fixed @click-left="clickLeft">
             <template #title>
                 <div v-if="!(state.showType == 1 || state.showType == 2)" v-html="state.title"></div>
-                <div v-if="state.showType == 1">
-                    <van-image :src="state.talkData.icon" width="22" height="22" round />
-                    <span class="bar-text">{{ state.talkData.name }}({{ state.talkData.toId }})</span>
-                </div>
-                <div v-if="state.showType == 2">
+                <div v-if="state.showType == 1 || state.showType == 2" class="chat-title">
                     <van-image :src="state.talkData.icon" width="22" height="22" round />
                     <span class="bar-text">{{ state.talkData.name }}({{ state.talkData.toId }})</span>
                 </div>
@@ -17,7 +13,7 @@
                 <span>返回</span>
             </template>
             <template #right v-if="state.showType == 0">
-                <van-badge :content="state.badge" :show-zero="false">
+                <van-badge :content="state.badge" :show-zero="false" :max="99">
                     <van-icon name="more-o" size="18" @click="goMsg" />
                 </van-badge>
             </template>
@@ -107,6 +103,7 @@ const FriendRef = ref();
 const GroupRef = ref();
 const MsgRef = ref();
 const PhoneRef = ref();
+const PersonRef = ref();
 
 
 const heartbeatTimer = ref<NodeJS.Timeout | number>(0);
@@ -403,6 +400,9 @@ const onMessage = (event: any) => {
         if (inArray(data.MsgMedia, [11, 12])) {
             loadFriendStatus(data)
         }
+        if (inArray(data.MsgMedia, [13])) {
+            loadFriendInfo(data)
+        }
         if (inArray(data.MsgMedia, [21, 22, 23, 24])) {
             loadFriendManage(data)
         }
@@ -424,17 +424,26 @@ const loadDisconnect = () => {
     state.socket = null
     router.push('/login');
 }
-// 2、上线、下线
+// 2-1、上线、下线
 const loadFriendStatus = (data: any) => {
     if (data.ToId == state.selftUserInfo.Uid) {
         FriendRef.value.loadFriendStatus(data)
     }
 }
+
+// 2-2、用户信息
+const loadFriendInfo = (data: any) => {
+    if (data.ToId == state.selftUserInfo.Uid) {
+        FriendRef.value.loadFriendInfo(data)
+    }
+}
+
+
 // 3、好友增删查改
 const loadFriendManage = (data: any) => {
     if (inArray(data.MsgMedia, [21, 22, 23])) {  //21 添加好友 //22成功添加好友 //23拒绝添加好友
         MsgRef.value.loadMsgManage(data)
-        if (state.showType != 4) {
+        if (state.showType != 5) {
             state.badge++
         }
     }
@@ -445,7 +454,7 @@ const loadFriendManage = (data: any) => {
 const loadGroupManage = (data: any) => {
     if (inArray(data.MsgMedia, [31, 32, 33])) {//31 添加群 //32成功添加群 //33拒绝添加群
         MsgRef.value.loadMsgManage(data)
-        if (state.showType != 4) {
+        if (state.showType != 5) {
             state.badge++
         }
     }
@@ -573,6 +582,9 @@ const childOperateTalkTips = async (type: number, num: number) => {
 const childOperatePersonUser = () => {
     changeTabbar()
     state.showType = 0
+
+    //同步person组件数据
+    PersonRef.value.reloadUserInfo()
 }
 
 const childOperatePersonGroup = () => {
@@ -617,3 +629,12 @@ const childOperatePhoneResponse = async () => {
 
 
 </script>
+<style scoped>
+.chat-title .van-image{
+    float:left;
+}
+.chat-title span{
+    float:left;
+    margin-left: 5px;
+}
+</style>

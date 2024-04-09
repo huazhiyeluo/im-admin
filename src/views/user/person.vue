@@ -65,6 +65,10 @@ const init = () => {
     state.selftUserInfo = Session.get('userInfo')
 };
 
+const reloadUserInfo = () => {
+    state.selftUserInfo = Session.get('userInfo')
+};
+
 
 // 初始化表格数据
 
@@ -124,6 +128,11 @@ const logout = async () => {
     router.push('/login');
 }
 
+
+// 暴露变量
+defineExpose({
+  reloadUserInfo
+});
 
 </script>
 

@@ -13,8 +13,7 @@
             </van-field>
             <van-field v-model="state.personInfo.username" name="用户名" label="用户名" placeholder="用户名"
                 :rules="[{ required: true, message: '请填写用户名' }]" />
-            <van-field v-model="state.personInfo.info" type="textarea" name="描述" label="描述" placeholder="描述"
-                :rules="[{ required: true, message: '请填写描述' }]" />
+            <van-field v-model="state.personInfo.info" type="textarea" name="描述" label="描述" placeholder="描述" />
         </van-cell-group>
         <div style="margin: 16px;">
             <van-button round block type="primary" size="small" native-type="submit" @click="doPersonInfo">
@@ -53,6 +52,7 @@ const init = () => {
     state.selftUserInfo = Session.get('userInfo')
     state.personInfo.uid = state.selftUserInfo.Uid
     state.personInfo.username = state.selftUserInfo.Username
+    state.personInfo.info = state.selftUserInfo.Info
 };
 
 
@@ -80,12 +80,6 @@ const doPersonInfo = () => {
             state.selftUserInfo.Username = response.data.Username;
             state.selftUserInfo.Info = response.data.Info;
             Session.set('userInfo', state.selftUserInfo)
-            state.personInfo = {
-                uid: 0,
-                username: "",
-                avatar: "",
-                info: "",
-            }
             emit("update-parameter-person-user")
         } else {
             showFailToast(response.msg);

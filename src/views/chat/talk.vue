@@ -41,6 +41,9 @@
                     <p v-if="item.MsgMedia == 12">
                         <van-icon name="phone-o" />通话时长: {{ formatSeconds(getContent(item)) }}
                     </p>
+                    <p v-if="item.MsgMedia == 13">
+                        <van-icon name="phone-o" />{{ getContent(item) }}
+                    </p>
                     <span class="message-time">{{ formatTime(item.CreateTime, "hh:mm") }}</span>
                     <div class="status-icon read"></div>
                 </div>
@@ -231,7 +234,7 @@ const setChatList = async () => {
 
 
 const getContent = (item: MsgData) => {
-    if (inArray(item.MsgMedia, [1, 10, 11, 12])) {
+    if (inArray(item.MsgMedia, [1, 10, 11, 12, 13])) {
         return item.Content.Data
     } else {
         return item.Content.Url

@@ -44,7 +44,6 @@ const init = () => {
 
 const getClass = (item: GroupData) => {
   const content = getContent(item);
-  console.log(content)
   if (content == "") {
     return "user-name-single"
   }
@@ -175,24 +174,27 @@ const loadGroupMsg = (data: MsgData, num: number = 0) => {
 }
 
 const getContent = (item: GroupData) => {
-  if (item.MsgMedia == 1) {
-    return item.Content.Data
-  } else if (item.MsgMedia == 2) {
-    return '[图片]'
-  } else if (item.MsgMedia == 3) {
-    return '[音频]'
-  } else if (item.MsgMedia == 4) {
-    return '[视频]'
-  } else if (item.MsgMedia == 5) {
-    return '[文件]'
-  } else if (item.MsgMedia == 6) {
-    return '[表情]'
-  } else if (item.MsgMedia == 10) {
-    return '[语音通话]' + item.Content.Data
-  } else if (item.MsgMedia == 11) {
-    return '[语音通话]' + item.Content.Data
-  } else if (item.MsgMedia == 12) {
-    return '[语音通话]通话时长: ' + formatSeconds(item.Content.Data)
+  switch (item.MsgMedia) {
+    case 1:
+      return item.Content.Data;
+    case 2:
+      return '[图片]';
+    case 3:
+      return '[音频]';
+    case 4:
+      return '[视频]';
+    case 5:
+      return '[文件]';
+    case 6:
+      return '[表情]';
+    case 10:
+    case 11:
+    case 13:
+      return '[语音通话]' + item.Content.Data;
+    case 12:
+      return '[语音通话]通话时长: ' + formatSeconds(item.Content.Data);
+    default:
+      return '';
   }
 }
 
