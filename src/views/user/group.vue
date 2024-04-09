@@ -34,7 +34,7 @@ import type { UserInfo } from '@/utils/schema';
 
 import { upload, editGroup } from '@/api/index';
 
-const emit = defineEmits(['update-parameter'])
+const emit = defineEmits(['update-parameter-person-group'])
 
 const state = reactive({
     selftUserInfo: {} as UserInfo,
@@ -110,7 +110,7 @@ const doPersonInfo = () => {
                 info: "",
                 icon: "",
             }
-            emit("update-parameter")
+            emit("update-parameter-person-group")
         } else {
             showFailToast(response.msg);
         }

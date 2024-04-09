@@ -42,36 +42,39 @@
             </template>
         </van-nav-bar>
         <van-tabbar v-if="state.showType == 0" v-model="state.tabActiveName" @change="changeTabbar">
-            <van-tabbar-item name="friend" icon="chat-o">好友</van-tabbar-item>
-            <van-tabbar-item name="group" icon="friends-o">群聊</van-tabbar-item>
+            <van-tabbar-item name="friend" icon="chat-o" 
+                :badge="state.tipsData.friend" :badge-props="state.tipsData.friendProps">好友</van-tabbar-item>
+            <van-tabbar-item name="group" icon="friends-o"
+                :badge="state.tipsData.group" :badge-props="state.tipsData.groupProps">群聊</van-tabbar-item>
             <van-tabbar-item name="person" icon="user-o">我的</van-tabbar-item>
         </van-tabbar>
 
-        <FriendComponent v-show="state.tabActiveName == 'friend' && state.showType == 0" ref="FriendRef"
-            @update-parameter="childOperateFriend" :db="state.db" />
-        <GroupComponent v-show="state.tabActiveName == 'group' && state.showType == 0" ref="GroupRef"
-            @update-parameter="childOperateGroup" :db="state.db" />
+        <FriendComponent v-show="state.tabActiveName == 'friend' && state.showType == 0" ref="FriendRef" :db="state.db"
+            @update-parameter-friend="childOperateFriend" @update-parameter-friend-tips="childOperateFriendTips" />
+        <GroupComponent v-show="state.tabActiveName == 'group' && state.showType == 0" ref="GroupRef" :db="state.db"
+            @update-parameter-group="childOperateGroup" @update-parameter-group-tips="childOperateGroupTips" />
         <PersonComponent v-show="state.tabActiveName == 'person' && state.showType == 0" ref="PersonRef"
-            @update-parameter="childOperatePerson" />
+            @update-parameter-person="childOperatePerson" />
 
-        <TalkComponent v-show="(state.showType == 1 || state.showType == 2)" ref="TalkRef"
-            @update-parameter="childOperateTalk" @update-parameter-go-phone="childOperateGoPhone" :socket="state.socket"
-            :db="state.db" :talkData="state.talkData" />
+        <TalkComponent v-show="(state.showType == 1 || state.showType == 2)" ref="TalkRef" :db="state.db"
+            :talkData="state.talkData" :socket="state.socket" @update-parameter-talk="childOperateTalk"
+            @update-parameter-talk-phone="childOperateTalkPhone" @update-parameter-talk-msg="childOperateTalkMsg"
+            @update-parameter-talk-tips="childOperateTalkTips" />
 
         <PersonUserComponent v-show="state.showType == 3" ref="PersonUserRef"
-            @update-parameter="childOperatePersonUser" />
+            @update-parameter-person-user="childOperatePersonUser" />
 
         <PersonGroupComponent v-show="state.showType == 4" ref="PersonGroupRef"
-            @update-parameter="childOperatePersonGroup" />
+            @update-parameter-person-group="childOperatePersonGroup" />
 
-        <MsgComponent v-show="state.showType == 5" ref="MsgRef" @update-parameter="childOperateMsg" :db="state.db" />
+        <MsgComponent v-show="state.showType == 5" ref="MsgRef" :db="state.db"
+            @update-parameter-msg="childOperateMsg" />
 
-        <PhoneComponent v-show="state.isShowPhone" ref="PhoneRef" @update-parameter="childOperatePhone"
-            @update-parameter-go-phone-request="childOperateGoPhoneRequest"
-            @update-parameter-go-phone-response="childOperateGoPhoneResponse" @update-parameter-send="sendMessage"
-            :db="state.db" :phoneData="state.phoneData" :talkData="state.talkData" />
-
-
+        <PhoneComponent v-show="state.isShowPhone" ref="PhoneRef" :db="state.db" :phoneData="state.phoneData"
+            :talkData="state.talkData" @update-parameter="childOperatePhone"
+            @update-parameter-phone-request="childOperatePhoneRequest"
+            @update-parameter-phone-response="childOperatePhoneResponse"
+            @update-parameter-phone-send="childOperatePhoneSend" />
     </div>
 </template>
 <script setup lang="ts">
@@ -87,7 +90,6 @@ import { saveGroupUser, saveUser } from '@/utils/dbsave';
 import { useRouter } from 'vue-router';
 import { showNotify } from 'vant';
 import { inArray } from '@/utils/common';
-import { stat } from 'fs';
 const router = useRouter();
 
 const FriendComponent = defineAsyncComponent(() => import('@/views/chat/friend.vue'));
@@ -140,6 +142,18 @@ const state = reactive({
     isShowPhone: false,
     phoneData: {
         showType: 0,
+    },
+    tipsData: {
+        friend: 0,
+        friendProps:{
+            'show-zero':false,
+            'max':99,
+        },
+        group: 0,
+        groupProps:{
+            'show-zero':false,
+            'max':99,
+        },
     }
 });
 
@@ -214,13 +228,14 @@ const changeTabbar = () => {
 const clickLeft = () => {
     changeTabbar()
     state.showType = 0
+    state.talkData = {
+        msgType: 0,                     
+        toId: 0, 
+        name: "",
+        icon: "",
+    }
 }
 
-const goMsg = () => {
-    state.title = "消息盒子"
-    state.showType = 5
-    state.badge = 0
-}
 
 // --------------------------------------------------------------------- friend ------------------------------------------------------------------------
 const onFriendSelect = async (action: any, index: number) => {
@@ -293,6 +308,13 @@ const onGroupClear = (fromId: number, toId: number) => {
 }
 // --------------------------------------------------------------------- msg ------------------------------------------------------------------------
 
+
+const goMsg = () => {
+    state.title = "消息盒子"
+    state.showType = 5
+    state.badge = 0
+}
+
 const clearMsg = () => {
     MsgRef.value.clearMsg()
 }
@@ -350,8 +372,7 @@ const heartbeat = () => {
         return
     }
     if (state.socket.readyState == 1) {
-        const content =
-            sendMessage({ FromId: state.selftUserInfo.Uid, Content: { "Data": "心跳" }, MsgMedia: 0, MsgType: 0 })
+        TalkRef.value.sendMessage({ FromId: state.selftUserInfo.Uid, Content: { "Data": "心跳" }, MsgMedia: 0, MsgType: 0 })
     }
 }
 
@@ -362,17 +383,30 @@ const onMessage = (event: any) => {
     if (inArray(data.MsgType, [1, 2])) {
         // 处理接收到的消息
         TalkRef.value.onMessage(event);
+        let num: number = 1
+        if (data.MsgType == 1) {
+            if (data.FromId == state.talkData.toId) {
+                num = 0
+            }
+            FriendRef.value.loadFriendMsg(data, num)
+        }
+        if (data.MsgType == 2) {
+            if (data.ToId == state.talkData.toId) {
+                num = 0
+            }
+            GroupRef.value.loadGroupMsg(data, num)
+        }
     } else if (inArray(data.MsgType, [3])) {
         if (data.MsgMedia == 10) {
             loadDisconnect()
         }
         if (inArray(data.MsgMedia, [11, 12])) {
-            loadUserStatus(data)
+            loadFriendStatus(data)
         }
         if (inArray(data.MsgMedia, [21, 22, 23, 24])) {
-            loadUserManage(data)
+            loadFriendManage(data)
         }
-        if (inArray(data.MsgMedia, [30, 31, 32, 33, 34])) {
+        if (inArray(data.MsgMedia, [30, 31, 32, 33, 34, 35])) {
             loadGroupManage(data)
         }
     } else if (inArray(data.MsgType, [4])) {
@@ -391,31 +425,39 @@ const loadDisconnect = () => {
     router.push('/login');
 }
 // 2、上线、下线
-const loadUserStatus = (data: any) => {
+const loadFriendStatus = (data: any) => {
     if (data.ToId == state.selftUserInfo.Uid) {
-        FriendRef.value.loadUserStatus(data)
+        FriendRef.value.loadFriendStatus(data)
     }
 }
 // 3、好友增删查改
-const loadUserManage = (data: any) => {
-    if (inArray(data.MsgMedia, [21, 22, 23])) {
-        MsgRef.value.loadUserManage(data)
+const loadFriendManage = (data: any) => {
+    if (inArray(data.MsgMedia, [21, 22, 23])) {  //21 添加好友 //22成功添加好友 //23拒绝添加好友
+        MsgRef.value.loadMsgManage(data)
         if (state.showType != 4) {
             state.badge++
         }
     }
-    FriendRef.value.loadUserManage(data)
+    FriendRef.value.loadFriendManage(data)
 }
 
 // 4、组增删查改
 const loadGroupManage = (data: any) => {
-    if (inArray(data.MsgMedia, [31, 32, 33])) {
-        MsgRef.value.loadUserManage(data)
+    if (inArray(data.MsgMedia, [31, 32, 33])) {//31 添加群 //32成功添加群 //33拒绝添加群
+        MsgRef.value.loadMsgManage(data)
         if (state.showType != 4) {
             state.badge++
         }
     }
-    GroupRef.value.loadUserManage(data)
+
+    if (data.MsgMedia == 35 && state.talkData.msgType == 2){
+        const res = JSON.parse(data.Content.Data);
+        if (res.group.GroupId == state.talkData.toId){
+            clickLeft()
+        }
+    }
+
+    GroupRef.value.loadGroupManage(data)
 }
 
 // 5、消息管理
@@ -441,6 +483,10 @@ const childOperateFriend = async (msgType: number, toId: number) => {
     state.showType = 1
 }
 
+const childOperateFriendTips = async (num: number) => {
+    state.tipsData.friend += num
+}
+
 const childOperateGroup = async (msgType: number, toId: number) => {
     if (!state.db) {
         return
@@ -463,13 +509,29 @@ const childOperateGroup = async (msgType: number, toId: number) => {
     state.showType = 2
 }
 
+const childOperateGroupTips = async (num: number) => {
+    state.tipsData.group += num
+}
+
+const childOperatePerson = (editType: number, title: string) => {
+    if (editType == 1) {
+        state.showType = 3
+    }
+    if (editType == 2) {
+        state.showType = 4
+    }
+    state.title = title
+}
+
+
+
 const childOperateTalk = () => {
     initWebsocket()
 }
 
 //拨打电话
-const childOperateGoPhone = async (toId: number) => {
-    console.log("childOperateGoPhone", toId)
+const childOperateTalkPhone = async (toId: number) => {
+    console.log("childOperateTalkPhone", toId)
     if (!state.db) {
         return
     }
@@ -484,15 +546,29 @@ const childOperateGoPhone = async (toId: number) => {
     PhoneRef.value.goPhone()
 }
 
-const childOperatePerson = (editType: number, title: string) => {
-    if (editType == 1) {
-        state.showType = 3
+
+// 本地消息处理
+const childOperateTalkMsg = (data: MsgData) => {
+    if (data.MsgType == 1) {
+        FriendRef.value.loadFriendMsg(data, 0)
     }
-    if (editType == 2) {
-        state.showType = 4
+    if (data.MsgType == 2) {
+        GroupRef.value.loadGroupMsg(data, 0)
     }
-    state.title = title
 }
+
+
+const childOperateTalkTips = async (type: number, num: number) => {
+    if (type == 1) {
+        state.tipsData.friend += num
+    }
+    if (type == 2) {
+        state.tipsData.group += num
+    }
+}
+
+
+
 
 const childOperatePersonUser = () => {
     changeTabbar()
@@ -512,13 +588,13 @@ const childOperatePhone = () => {
 
 }
 
-const sendMessage = (data: MsgData) => {
+const childOperatePhoneSend = (data: any) => {
     TalkRef.value.sendMessage(data)
 }
 
 //收到电话请求
-const childOperateGoPhoneRequest = async (toId: number) => {
-    console.log("childOperateGoPhone", toId)
+const childOperatePhoneRequest = async (toId: number) => {
+    console.log("childOperatePhoneRequest", toId)
     if (!state.db) {
         return
     }
@@ -533,8 +609,8 @@ const childOperateGoPhoneRequest = async (toId: number) => {
 }
 
 //收到电话响应（接通）
-const childOperateGoPhoneResponse = async () => {
-    console.log("childOperateGoPhoneResponse")
+const childOperatePhoneResponse = async () => {
+    console.log("childOperatePhoneResponse")
     state.showType = 1
 }
 

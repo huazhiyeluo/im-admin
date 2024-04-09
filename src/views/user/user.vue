@@ -1,6 +1,11 @@
 <template>
     <van-form class="person-user">
         <van-cell-group inset>
+            <van-field name="uid" label="UID">
+                <template #input>
+                    {{ state.personInfo.uid }}
+                </template>
+            </van-field>
             <van-field name="uploader" label="头像">
                 <template #input>
                     <van-uploader  accept="image/*" v-model="state.fileList" reupload max-count="1" :after-read="handleSuccessImage"/>
@@ -27,7 +32,7 @@ import type { UserInfo } from '@/utils/schema';
 
 import { upload,editUser } from '@/api/index';
 
-const emit = defineEmits(['update-parameter'])
+const emit = defineEmits(['update-parameter-person-user'])
 
 const state = reactive({
     selftUserInfo: {} as UserInfo,
@@ -46,6 +51,8 @@ onMounted(() => {
 });
 const init = () => {
     state.selftUserInfo = Session.get('userInfo')
+    state.personInfo.uid = state.selftUserInfo.Uid
+    state.personInfo.username = state.selftUserInfo.Username
 };
 
 
@@ -58,6 +65,12 @@ const handleSuccessImage = (file:any) => {
 }
 
 const doPersonInfo = () => {
+    if (state.personInfo.username == ''){
+        state.personInfo.username = state.selftUserInfo.Username
+    }
+    if (state.personInfo.avatar == ''){
+        state.personInfo.avatar = state.selftUserInfo.Avatar
+    }
     let updateData = JSON.parse(JSON.stringify(state.personInfo));
     updateData.uid = state.selftUserInfo.Uid
     editUser(updateData).then((response: any) => {
@@ -73,7 +86,7 @@ const doPersonInfo = () => {
                 avatar: "",
                 info: "",
             }
-            emit("update-parameter")
+            emit("update-parameter-person-user")
         } else {
             showFailToast(response.msg);
         }

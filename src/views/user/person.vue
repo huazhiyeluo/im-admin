@@ -4,10 +4,10 @@
             <!-- 个人头像 -->
             <li @click="setPersonInfo" class="my-person">
                 <van-image width="50" height="50" round :src="state.selftUserInfo.Avatar" />
-                <span>{{ state.selftUserInfo.Username }} [{{state.selftUserInfo.Uid }}]</span>
+                <span>{{ state.selftUserInfo.Username }} [{{ state.selftUserInfo.Uid }}]</span>
             </li>
             <!-- 添加好友 -->
-            <li @click="goAddFriend">添加好友</li>
+            <li @click="goAddFriend" class="friend">添加好友</li>
 
             <!-- 加入群聊 -->
             <li @click="goJoinGroup">加入群聊</li>
@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import {  onMounted, reactive } from 'vue'
+import { onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router';
 import { showSuccessToast, showFailToast } from 'vant';
 import { Session } from '@/utils/storage';
@@ -39,17 +39,17 @@ import { addFriend, joinGroup } from '@/api/index';
 
 
 const router = useRouter();
-const emit = defineEmits(['update-parameter'])
+const emit = defineEmits(['update-parameter-person'])
 
 const state = reactive({
     selftUserInfo: {} as UserInfo,
-    showAddFriend:false,
+    showAddFriend: false,
     addFriendForm: {
         "fromId": 0,
         "toId": "",
         "reason": "",
     },
-    showJoinGroup:false,
+    showJoinGroup: false,
     joinGroupForm: {
         "fromId": 0,
         "toId": "",
@@ -112,12 +112,11 @@ const doJoinGroup = async () => {
 
 
 const setPersonInfo = async () => {
-    emit("update-parameter", 1, "修改资料")
+    emit("update-parameter-person", 1, "修改资料")
 }
 const createGroup = async () => {
-    emit("update-parameter", 2, "创建群聊")
+    emit("update-parameter-person", 2, "创建群聊")
 }
-
 
 
 const logout = async () => {
@@ -129,7 +128,7 @@ const logout = async () => {
 </script>
 
 <style scoped>
-.person-list{
+.person-list {
     margin-top: 46px;
     height: calc(100vh - 46px);
     overflow-y: auto;
@@ -146,6 +145,23 @@ const logout = async () => {
     padding: 10px 0;
     line-height: 40px;
     border-bottom: 1px solid #ccc;
+}
+
+.person-list .my-person {
+    height: 80px;
+}
+
+.person-list .my-person .van-image {
+    float: left;
+}
+
+.person-list .my-person span {
+    float: left;
+    margin-left: 10px;
+}
+
+.person-list .friend {
+    clear: both;
 }
 
 .line-button {

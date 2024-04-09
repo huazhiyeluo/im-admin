@@ -32,10 +32,13 @@
                         <van-image width="40" height="40" round :src="getContent(item)"
                             @click="previewPic(getContent(item))" />
                     </p>
-                    <p v-if="item.MsgMedia == 7">
+                    <p v-if="item.MsgMedia == 10">
                         <van-icon name="phone-o" />{{ getContent(item) }}
                     </p>
-                    <p v-if="item.MsgMedia == 8">
+                    <p v-if="item.MsgMedia == 11">
+                        <van-icon name="phone-o" />{{ getContent(item) }}
+                    </p>
+                    <p v-if="item.MsgMedia == 12">
                         <van-icon name="phone-o" />通话时长: {{ formatSeconds(getContent(item)) }}
                     </p>
                     <span class="message-time">{{ formatTime(item.CreateTime, "hh:mm") }}</span>
@@ -45,11 +48,12 @@
         </div>
         <div class="el-footer">
             <div class="input-container-inner">
-                <van-field v-model="state.input" label="" @input="changeInput" />
+                <van-field v-model="state.input" name="inputMsg" @update:model-value="changeInput" placeholder="在输入消息" />
                 <span :size="30" @click="showSmile" ref="showSmileRef"><van-icon name="smile-o" :size="30" /></span>
-                <span :size="30" @click="showPlugin" v-show="state.isInputEmpty" ref="showPluginRef"><van-icon
-                        name="add-o" :size="30" /></span>
-                <van-icon name="guide-o" :size="30" @click="sendTextMessage" v-if="!state.isInputEmpty" />
+                <span :size="30" @click="showPlugin" v-show="state.isInputEmpty" ref="showPluginRef">
+                    <van-icon name="add-o" :size="30" />
+                </span>
+                <van-icon name="guide-o" :size="30" @click="sendTextMessage" v-show="!state.isInputEmpty" />
             </div>
             <div class="chat-smile" v-if="state.isShowSmile" ref="smileRef">
                 <van-image v-for="item in state.emojs" width="30" height="30" :src="item"
@@ -101,7 +105,7 @@ import { upload } from '@/api/index';
 import { addItem, deleteByMultipleIndexes, getByTimeIndex, getItemById } from '@/utils/indexedDB';
 
 const props = defineProps(['db', 'socket', 'talkData'])
-const emit = defineEmits(['update-parameter', 'update-parameter-go-phone'])
+const emit = defineEmits(['update-parameter-talk', 'update-parameter-talk-phone', 'update-parameter-talk-msg','update-parameter-talk-tips'])
 
 const chatMessages = ref<HTMLElement | null>(null);
 const pluginRef = ref<HTMLElement | null>(null);
@@ -167,6 +171,7 @@ const init = async () => {
 };
 
 const changeInput = () => {
+    console.log(111,state.input)
     if (state.input == "") {
         state.isInputEmpty = true;
     } else {
@@ -199,7 +204,7 @@ const getKey = (msgType: number, fromId: number, toId: number) => {
 
 const getClass = (item: MsgData) => {
     const classstr = item.FromId === state.selftUserInfo.Uid ? 'message user-message' : 'message other-message'
-    if (item.MsgType == 1 && item.MsgMedia == 7) {
+    if (item.MsgType == 1 && item.MsgMedia == 10) {
         return "message user-message"
     }
     return classstr
@@ -226,8 +231,7 @@ const setChatList = async () => {
 
 
 const getContent = (item: MsgData) => {
-
-    if (inArray(item.MsgMedia, [1, 7, 8])) {
+    if (inArray(item.MsgMedia, [1, 10, 11, 12])) {
         return item.Content.Data
     } else {
         return item.Content.Url
@@ -291,29 +295,28 @@ const handleSuccessVideo = (file: any) => {
 const sendMessage = async (data: any) => {
     const jsonString = JSON.stringify(data);
     if (!props.socket || props.socket.readyState !== WebSocket.OPEN) {
-        emit("update-parameter")
+        emit("update-parameter-talk")
         return
     }
-    // if (data.MsgType == 4) {
-    console.log("sendMessage", JSON.parse(jsonString))
-    // }
+    if (data.MsgType == 4) {
+        console.log("sendMessage", JSON.parse(jsonString))
+    }
 
     props.socket.send(jsonString);
     if (!inArray(data.MsgType, [1, 2])) {
         return
     }
 
-
     data.Avatar = state.selftUserInfo.Avatar
-    data.CreateTime = Math.floor(Date.now() / 1000)
+    data.CreateTime = Math.floor(new Date().getTime() / 1000)
 
     const rkey = getKey(props.talkData.msgType, state.selftUserInfo.Uid, props.talkData.toId)
     if (!state.historyContentList.hasOwnProperty(rkey)) {
         state.historyContentList[rkey] = []
     }
     state.historyContentList[rkey].push(data)
-
     await addItem(props.db, "message", data);
+    emit("update-parameter-talk-msg", data)
     setTimeout(setScroll, 1);  // 1毫秒后滚动
 }
 1
@@ -330,8 +333,20 @@ const onMessage = async (event: any) => {
         state.historyContentList[rkey] = []
     }
     state.historyContentList[rkey].push(data)
-
     await addItem(props.db, "message", data);
+
+    let num: number = 1
+    if (data.MsgType == 1) {
+        if (data.FromId == props.talkData.toId) {
+            num = 0
+        }
+    }
+    if (data.MsgType == 2) {
+        if (data.ToId == props.talkData.toId) {
+            num = 0
+        }
+    }
+    emit("update-parameter-talk-tips",data.MsgType, num)
     setTimeout(setScroll, 1);  // 1毫秒后滚动
 }
 
@@ -361,7 +376,7 @@ const setScroll = () => {
 
 
 const goPhone = () => {
-    emit("update-parameter-go-phone", props.talkData.toId)
+    emit("update-parameter-talk-phone", props.talkData.toId)
     state.isShowPlugin = false
 }
 

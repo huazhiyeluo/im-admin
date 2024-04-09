@@ -12,6 +12,10 @@ export interface FriendData {
     Username: string;
     Avatar: string;
     IsOnline: boolean;
+    OperateTime:number;
+    Tips:number;
+    MsgMedia: number;
+    Content: ChildContent;
 }
 
 export interface GroupData {
@@ -21,6 +25,10 @@ export interface GroupData {
     Icon: string;
     Info: string;
     Num: boolean;
+    OperateTime:number;
+    Tips:number;
+    MsgMedia: number;
+    Content: ChildContent;
 }
 
 export interface ChildContent {
