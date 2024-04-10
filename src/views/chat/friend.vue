@@ -19,7 +19,7 @@
 import { reactive, onMounted } from 'vue'
 import { Session } from '@/utils/storage';
 import { getFriendList } from '@/api/index';
-import { getImg, saveUser, urlToBlob } from '@/utils/dbsave';
+import { getImg, saveUser } from '@/utils/dbsave';
 import { formatSeconds } from '@/utils/formatTime';
 import type { UserInfo, FriendData, MsgData } from '@/utils/schema';
 import { getItemById } from '@/utils/indexedDB';
