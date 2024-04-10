@@ -77,7 +77,7 @@ const getList = async () => {
 
 
 //用户状态
-const loadFriendStatus = (data: any) => {
+const loadFriendStatus = async (data: any) => {
   if (data.ToId === state.selftUserInfo.Uid) {
     const friend = state.friends.find(friend => friend.Uid === data.FromId);
     if (friend) {
@@ -89,7 +89,12 @@ const loadFriendStatus = (data: any) => {
       } else if (data.MsgMedia === 12) {
         friend.IsOnline = false;
       }
-      saveUser(props.db, friend);
+
+      const temp = await getItemById(props.db, "users", data.FromId)
+      if (temp){
+        temp.IsOnline = friend.IsOnline
+      }
+      saveUser(props.db, temp);
     }
   }
 }
@@ -148,7 +153,7 @@ const loadFriendManageDelete = (res: any) => {
 
 
 
-const loadFriendMsg = (data: MsgData, num: number = 0) => {
+const loadFriendMsg = async (data: MsgData, num: number = 0) => {
   if (num > 0) {
     // 播放声音
     var audio = new Audio('/src/assets/voice/3.mp3');
@@ -161,8 +166,13 @@ const loadFriendMsg = (data: MsgData, num: number = 0) => {
       state.friends[key].MsgMedia = data.MsgMedia
       state.friends[key].Content = data.Content
       state.friends.sort((a, b) => b.OperateTime - a.OperateTime);
-      console.log(state.friends)
-      saveUser(props.db, state.friends[key])
+
+      const newData = JSON.parse(JSON.stringify(state.friends[key]));
+      const temp = await getItemById(props.db, "users", state.friends[key].Uid)
+      if (temp){
+        newData.Avatar = temp.Avatar
+      }
+      saveUser(props.db, newData)
       break;
     }
   }
@@ -200,8 +210,14 @@ const goChat = async (toId: number) => {
   for (const key in state.friends) {
     if (state.friends[key].Uid == toId) {
       emit("update-parameter-friend-tips", -state.friends[key].Tips)
-      state.friends[key].Tips = 0
-      saveUser(props.db, state.friends[key])
+      if (state.friends[key].Tips > 0) {
+        state.friends[key].Tips = 0
+        const temp = await getItemById(props.db, "users", state.friends[key].Uid)
+        if (temp){
+          temp.Tips = 0
+          saveUser(props.db, temp)
+        }
+      }
       break;
     }
   }

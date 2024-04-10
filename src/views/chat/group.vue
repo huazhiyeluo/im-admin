@@ -154,7 +154,7 @@ const loadGroupManageDisband = (res: any) => {
 }
 
 
-const loadGroupMsg = (data: MsgData, num: number = 0) => {
+const loadGroupMsg = async (data: MsgData, num: number = 0) => {
   if (num > 0) {
     // 播放声音
     var audio = new Audio('/src/assets/voice/2.mp3');
@@ -167,7 +167,13 @@ const loadGroupMsg = (data: MsgData, num: number = 0) => {
       state.groups[key].MsgMedia = data.MsgMedia
       state.groups[key].Content = data.Content
       state.groups.sort((a, b) => b.OperateTime - a.OperateTime);
-      saveGroup(props.db, state.groups[key])
+
+      const newData = JSON.parse(JSON.stringify(state.groups[key]));
+      const temp = await getItemById(props.db, "groups", state.groups[key].GroupId)
+      if (temp){
+        newData.Icon = temp.Icon
+      }
+      saveGroup(props.db, newData)
       break;
     }
   }
@@ -203,8 +209,14 @@ const goChat = async (toId: number) => {
   for (const key in state.groups) {
     if (state.groups[key].GroupId == toId) {
       emit("update-parameter-group-tips", -state.groups[key].Tips)
-      state.groups[key].Tips = 0
-      saveGroup(props.db, state.groups[key])
+      if (state.groups[key].Tips >0){
+        state.groups[key].Tips = 0
+        const temp = await getItemById(props.db, "groups", state.groups[key].GroupId)
+        if (temp){
+          temp.Tips = 0
+          saveGroup(props.db, temp)
+        }
+      }
       break;
     }
   }

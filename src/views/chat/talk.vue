@@ -388,7 +388,7 @@ const clearMessage = (msgType: number, fromId: number, toId: number) => {
     state.historyContentList[rkey] = []
     if (msgType == 1) {
         deleteByMultipleIndexes(props.db, 'message', [{ indexName: "MsgType", value: msgType }, { indexName: "FromId", value: fromId }, { indexName: "ToId", value: toId }])
-        deleteByMultipleIndexes(props.db, 'message', [{ indexName: "MsgType", value: msgType }, { indexName: "FromId", value: fromId }, { indexName: "ToId", value: toId }])
+        deleteByMultipleIndexes(props.db, 'message', [{ indexName: "MsgType", value: msgType }, { indexName: "FromId", value: toId }, { indexName: "ToId", value: fromId }])
     }
     if (msgType == 2) {
         deleteByMultipleIndexes(props.db, 'message', [{ indexName: "MsgType", value: msgType }, { indexName: "ToId", value: toId }])
