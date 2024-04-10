@@ -267,7 +267,6 @@ export async function getByIndex(db: MyDatabase, storeName: string, indexName: s
 }
 
 export async function getByTimeIndex(db: MyDatabase, storeName: string, indexName: string, minValue: any, maxValue: any): Promise<any[]> {
-    console.log("getByTimeIndex", db, storeName, indexName, minValue, maxValue);
     return new Promise<any[]>((resolve, reject) => {
         const transaction = db.transaction([storeName], 'readonly');
         const objectStore = transaction.objectStore(storeName);

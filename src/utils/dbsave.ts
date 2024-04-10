@@ -85,6 +85,15 @@ export async function saveMessage(db: MyDatabase, data: any) {
     if (!data.Content) {
         data.Content = { "Data": "", "Name": "", "Url": "" }
     }
+    if (!data.Content.Data) {
+        data.Content.Data = ""
+    }
+    if (!data.Content.Name) {
+        data.Content.Name = ""
+    }
+    if (!data.Content.Url) {
+        data.Content.Url = ""
+    }
     await addItem(db, "message", {FromId: data.FromId, ToId: data.ToId, Avatar: data.Avatar, MsgType: data.MsgType, MsgMedia: data.MsgMedia, Content: { "Data": data.Content.Data, "Name": data.Content.Name, "Url": data.Content.Url }, CreateTime: data.CreateTime })
 }
 
@@ -104,7 +113,6 @@ export async function getImg(db: MyDatabase, url: string): Promise<string> {
     let imgUrl = url;
     const temp = await getItemById(db, "file", url);
     if (!temp) {
-        console.log("getImg", temp)
         const blob = await urlToBlob(url);
         await addItem(db, "file", { Url: url, Data: blob });
     } else {

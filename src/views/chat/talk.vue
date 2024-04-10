@@ -178,7 +178,7 @@ const init = async () => {
 };
 
 const changeInput = () => {
-    console.log(111,state.input)
+    console.log(111, state.input)
     if (state.input == "") {
         state.isInputEmpty = true;
     } else {
@@ -320,20 +320,23 @@ const sendMessage = async (data: any) => {
     data.Avatar = state.selftUserInfo.Avatar
     data.CreateTime = Math.floor(new Date().getTime() / 1000)
 
+    saveMessage(props.db, data)
+
     const rkey = getKey(props.talkData.msgType, state.selftUserInfo.Uid, props.talkData.toId)
     if (!state.historyContentList.hasOwnProperty(rkey)) {
         state.historyContentList[rkey] = []
     }
     const len = state.historyContentList[rkey].length
-
+    data.Avatar = await getImg(props.db, data.Avatar)
+    if (inArray(data.MsgMedia, [6]) && data.Content.Url) {
+        data.Content.Url = await getImg(props.db, data.Content.Url)
+    }
     state.historyContentList[rkey].push(data)
     emit("update-parameter-talk-msg", data)
     setTimeout(setScroll, 1);  // 1毫秒后滚动
-    saveMessage(props.db, data)
-    if (inArray(data.MsgMedia, [2, 3, 4, 5, 6]) && data.Content.Url) {
+    if (inArray(data.MsgMedia, [2, 3, 4, 5]) && data.Content.Url) {
         state.historyContentList[rkey][len].Content.Url = await getImg(props.db, data.Content.Url)
     }
-
 }
 1
 
@@ -350,13 +353,14 @@ const onMessage = async (event: any) => {
     if (!state.historyContentList.hasOwnProperty(rkey)) {
         state.historyContentList[rkey] = []
     }
+    const len = state.historyContentList[rkey].length
 
     data.Avatar = await getImg(props.db, data.Avatar)
-    if (inArray(data.MsgMedia, [2, 3, 4, 5, 6]) && data.Content.Url) {
+    if (inArray(data.MsgMedia, [6]) && data.Content.Url) {
         data.Content.Url = await getImg(props.db, data.Content.Url)
     }
     state.historyContentList[rkey].push(data)
-    
+
     let num: number = 1
     if (data.MsgType == 1) {
         if (data.FromId == props.talkData.toId) {
@@ -370,6 +374,10 @@ const onMessage = async (event: any) => {
     }
     emit("update-parameter-talk-tips", data.MsgType, num)
     setTimeout(setScroll, 1);  // 1毫秒后滚动
+
+    if (inArray(data.MsgMedia, [2, 3, 4, 5]) && data.Content.Url) {
+        state.historyContentList[rkey][len].Content.Url = await getImg(props.db, data.Content.Url)
+    }
 }
 
 const clearMessage = (msgType: number, fromId: number, toId: number) => {
