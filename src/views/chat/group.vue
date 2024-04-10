@@ -19,7 +19,7 @@ import { reactive, onMounted } from 'vue'
 import { Session } from '@/utils/storage';
 import { getGroupList } from '@/api/index';
 import { formatSeconds } from '@/utils/formatTime';
-import { delGroup, delGroupAllUser, delGroupUser, saveGroup, saveGroupUser, saveUser } from '@/utils/dbsave';
+import { delGroup, delGroupAllUser, delGroupUser, getImg, saveGroup, saveGroupUser, saveUser } from '@/utils/dbsave';
 import type { UserInfo, GroupData, MsgData } from '@/utils/schema';
 import { getItemById } from '@/utils/indexedDB';
 
@@ -72,6 +72,7 @@ const getList = async () => {
           state.groups[key].Content = { "Data": "", "Url": "", "Name": "" }
         }
         saveGroup(props.db, state.groups[key])
+        state.groups[key].Icon = await getImg(props.db, state.groups[key].Icon)
       }
       state.groups.sort((a, b) => b.OperateTime - a.OperateTime);
       emit("update-parameter-group-tips", totalTips)

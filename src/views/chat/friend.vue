@@ -19,7 +19,7 @@
 import { reactive, onMounted } from 'vue'
 import { Session } from '@/utils/storage';
 import { getFriendList } from '@/api/index';
-import { saveUser } from '@/utils/dbsave';
+import { getImg, saveUser, urlToBlob } from '@/utils/dbsave';
 import { formatSeconds } from '@/utils/formatTime';
 import type { UserInfo, FriendData, MsgData } from '@/utils/schema';
 import { getItemById } from '@/utils/indexedDB';
@@ -65,6 +65,7 @@ const getList = async () => {
           state.friends[key].Content = { "Data": "", "Url": "", "Name": "" }
         }
         saveUser(props.db, state.friends[key])
+        state.friends[key].Avatar = await getImg(props.db, state.friends[key].Avatar)
       }
       state.friends.sort((a, b) => b.OperateTime - a.OperateTime);
 
@@ -72,6 +73,8 @@ const getList = async () => {
     }
   });
 };
+
+
 
 //用户状态
 const loadFriendStatus = (data: any) => {

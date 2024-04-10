@@ -1,4 +1,4 @@
-import type { FriendData, GroupData, ApplyData } from './schema';
+import type { FriendData, GroupData, MsgData, ApplyData } from './schema';
 import { getItemById, updateItem, addItem, deleteByMultipleIndexes } from './indexedDB';
 import { deleteItem, type MyDatabase } from './indexedDB';
 
@@ -79,4 +79,36 @@ export async function saveApply(db: MyDatabase, data: ApplyData) {
     } else {
         await addItem(db, "apply", { Id: data.Id, FromId: data.FromId, FromName: data.FromName, FromIcon: data.FromIcon, ToId: data.ToId, ToName: data.ToName, ToIcon: data.ToIcon, Type: data.Type, Status: data.Status, Reason: data.Reason, OperateTime: data.OperateTime });
     }
+}
+
+export async function saveMessage(db: MyDatabase, data: any) {
+    if (!data.Content) {
+        data.Content = { "Data": "", "Name": "", "Url": "" }
+    }
+    await addItem(db, "message", {FromId: data.FromId, ToId: data.ToId, Avatar: data.Avatar, MsgType: data.MsgType, MsgMedia: data.MsgMedia, Content: { "Data": data.Content.Data, "Name": data.Content.Name, "Url": data.Content.Url }, CreateTime: data.CreateTime })
+}
+
+
+
+export async function urlToBlob(url: string): Promise<Blob> {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error('Failed to fetch file from URL');
+    }
+    const blob = await response.blob();
+    return blob;
+}
+
+
+export async function getImg(db: MyDatabase, url: string): Promise<string> {
+    let imgUrl = url;
+    const temp = await getItemById(db, "file", url);
+    if (!temp) {
+        console.log("getImg", temp)
+        const blob = await urlToBlob(url);
+        await addItem(db, "file", { Url: url, Data: blob });
+    } else {
+        imgUrl = URL.createObjectURL(temp.Data);
+    }
+    return imgUrl;
 }

@@ -206,6 +206,7 @@ const init = async () => {
         { name: 'users', keyPath: 'Uid', indexes: [{ name: 'Uid', keyPath: 'Uid', options: { unique: true } }] },
         { name: 'message', keyPath: 'Id', indexes: [{ name: 'CreateTime', keyPath: 'CreateTime' }, { name: 'FromId', keyPath: 'FromId' }, { name: 'ToId', keyPath: 'ToId' }, { name: 'MsgType', keyPath: 'MsgType' }] },
         { name: 'apply', keyPath: 'Id', indexes: [{ name: 'OperateTime', keyPath: 'OperateTime' }, { name: 'Type', keyPath: 'Type' }] },
+        { name: 'file', keyPath: 'Url', indexes: [{ name: 'Url', keyPath: 'Url' }, { name: 'Data', keyPath: 'Data' }] },
     ];
     state.db = await openDB(dbName, version, objectStores);
     saveUser(state.db, { Uid: state.selftUserInfo.Uid, Username: state.selftUserInfo.Username, Avatar: state.selftUserInfo.Avatar, IsOnline: true })

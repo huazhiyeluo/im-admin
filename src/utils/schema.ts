@@ -61,3 +61,8 @@ export interface ApplyData {
     Status: number;
     OperateTime:number;
 }
+
+export interface Emojs {
+    Url: string;
+    Newurl: string;
+}

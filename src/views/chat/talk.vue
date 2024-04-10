@@ -51,7 +51,8 @@
         </div>
         <div class="el-footer">
             <div class="input-container-inner">
-                <van-field v-model="state.input" name="inputMsg" @update:model-value="changeInput" placeholder="在输入消息" />
+                <van-field v-model="state.input" name="inputMsg" @update:model-value="changeInput"
+                    placeholder="在输入消息" />
                 <span :size="30" @click="showSmile" ref="showSmileRef"><van-icon name="smile-o" :size="30" /></span>
                 <span :size="30" @click="showPlugin" v-show="state.isInputEmpty" ref="showPluginRef">
                     <van-icon name="add-o" :size="30" />
@@ -59,8 +60,8 @@
                 <van-icon name="guide-o" :size="30" @click="sendTextMessage" v-show="!state.isInputEmpty" />
             </div>
             <div class="chat-smile" v-if="state.isShowSmile" ref="smileRef">
-                <van-image v-for="item in state.emojs" width="30" height="30" :src="item"
-                    @click="sendEmojsMessage(item)" />
+                <van-image v-for="item in state.emojs" width="30" height="30" :src="item.Newurl"
+                    @click="sendEmojsMessage(item.Url)" />
             </div>
             <div class="chat-plugins" v-if="state.isShowPlugin" ref="pluginRef">
                 <div class="plugins-item">
@@ -101,14 +102,15 @@
 import { ref, reactive, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { showImagePreview } from 'vant';
 import { formatTime, formatSeconds } from '@/utils/formatTime';
-import type { UserInfo, MsgData } from '@/utils/schema';
+import type { UserInfo, MsgData, Emojs } from '@/utils/schema';
 import { Session } from '@/utils/storage';
 import { inArray } from '@/utils/common';
 import { upload } from '@/api/index';
 import { addItem, deleteByMultipleIndexes, getByTimeIndex, getItemById } from '@/utils/indexedDB';
+import { getImg, saveMessage } from '@/utils/dbsave';
 
 const props = defineProps(['db', 'socket', 'talkData'])
-const emit = defineEmits(['update-parameter-talk', 'update-parameter-talk-phone', 'update-parameter-talk-msg','update-parameter-talk-tips'])
+const emit = defineEmits(['update-parameter-talk', 'update-parameter-talk-phone', 'update-parameter-talk-msg', 'update-parameter-talk-tips'])
 
 const chatMessages = ref<HTMLElement | null>(null);
 const pluginRef = ref<HTMLElement | null>(null);
@@ -126,7 +128,7 @@ const state = reactive({
     isInputEmpty: true,
     historyContentList: {} as { [key: string]: MsgData[] },
     rkey: "",
-    emojs: [] as string[],
+    emojs: [] as Emojs[],
 });
 
 onMounted(() => {
@@ -161,11 +163,13 @@ const handleOutsideClick = (event: any) => {
 
 const init = async () => {
     state.selftUserInfo = Session.get('userInfo')
-
     state.emojs = []
     for (let i = 0; i <= 134; i++) {
         const num = String(i).padStart(2, '0');
-        state.emojs.push(`/src/assets/images/emojs/${num}.gif`)
+        const url = `/src/assets/images/emojs/${num}.gif`
+        const newurl = await getImg(props.db, url)
+        const temp: Emojs = { "Url": url, "Newurl": newurl }
+        state.emojs.push(temp)
     }
     if (props.talkData.msgType && props.talkData.toId) {
         state.rkey = getKey(props.talkData.msgType, state.selftUserInfo.Uid, props.talkData.toId)
@@ -217,12 +221,15 @@ const setChatList = async () => {
     if (Object.keys(state.historyContentList).length === 0) {
         let nowtime = Math.floor(Date.now() / 1000)
         const temps = await getByTimeIndex(props.db, "message", "CreateTime", nowtime - 24 * 3600 * 30, nowtime)
-        console.log("setChatList", temps)
         for (let temp of temps) {
             const msgData = temp as unknown as MsgData
             const rkey = getKey(msgData.MsgType, msgData.FromId, msgData.ToId)
             if (!state.historyContentList.hasOwnProperty(rkey)) {
                 state.historyContentList[rkey] = []
+            }
+            msgData.Avatar = await getImg(props.db, msgData.Avatar)
+            if (inArray(msgData.MsgMedia, [2, 3, 4, 5, 6]) && msgData.Content.Url) {
+                msgData.Content.Url = await getImg(props.db, msgData.Content.Url)
             }
             state.historyContentList[rkey].push(msgData)
         }
@@ -317,10 +324,16 @@ const sendMessage = async (data: any) => {
     if (!state.historyContentList.hasOwnProperty(rkey)) {
         state.historyContentList[rkey] = []
     }
+    const len = state.historyContentList[rkey].length
+
     state.historyContentList[rkey].push(data)
-    await addItem(props.db, "message", data);
     emit("update-parameter-talk-msg", data)
     setTimeout(setScroll, 1);  // 1毫秒后滚动
+    saveMessage(props.db, data)
+    if (inArray(data.MsgMedia, [2, 3, 4, 5, 6]) && data.Content.Url) {
+        state.historyContentList[rkey][len].Content.Url = await getImg(props.db, data.Content.Url)
+    }
+
 }
 1
 
@@ -331,13 +344,19 @@ const onMessage = async (event: any) => {
     const userInfo = await getItemById(props.db, "users", data.FromId)
     data.Avatar = userInfo.Avatar
 
+    saveMessage(props.db, data)
+
     const rkey = getKey(data.MsgType, data.FromId, data.ToId)
     if (!state.historyContentList.hasOwnProperty(rkey)) {
         state.historyContentList[rkey] = []
     }
-    state.historyContentList[rkey].push(data)
-    await addItem(props.db, "message", data);
 
+    data.Avatar = await getImg(props.db, data.Avatar)
+    if (inArray(data.MsgMedia, [2, 3, 4, 5, 6]) && data.Content.Url) {
+        data.Content.Url = await getImg(props.db, data.Content.Url)
+    }
+    state.historyContentList[rkey].push(data)
+    
     let num: number = 1
     if (data.MsgType == 1) {
         if (data.FromId == props.talkData.toId) {
@@ -349,7 +368,7 @@ const onMessage = async (event: any) => {
             num = 0
         }
     }
-    emit("update-parameter-talk-tips",data.MsgType, num)
+    emit("update-parameter-talk-tips", data.MsgType, num)
     setTimeout(setScroll, 1);  // 1毫秒后滚动
 }
 
