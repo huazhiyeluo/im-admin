@@ -38,10 +38,10 @@
             </template>
         </van-nav-bar>
         <van-tabbar v-if="state.showType == 0" v-model="state.tabActiveName" @change="changeTabbar">
-            <van-tabbar-item name="friend" icon="chat-o" 
-                :badge="state.tipsData.friend" :badge-props="state.tipsData.friendProps">好友</van-tabbar-item>
-            <van-tabbar-item name="group" icon="friends-o"
-                :badge="state.tipsData.group" :badge-props="state.tipsData.groupProps">群聊</van-tabbar-item>
+            <van-tabbar-item name="friend" icon="chat-o" :badge="state.tipsData.friend"
+                :badge-props="state.tipsData.friendProps">好友</van-tabbar-item>
+            <van-tabbar-item name="group" icon="friends-o" :badge="state.tipsData.group"
+                :badge-props="state.tipsData.groupProps">群聊</van-tabbar-item>
             <van-tabbar-item name="person" icon="user-o">我的</van-tabbar-item>
         </van-tabbar>
 
@@ -81,7 +81,7 @@ import { openDB, getItemById, getByIndex } from '@/utils/indexedDB';
 import type { MyDatabase } from '@/utils/indexedDB';
 import type { MsgData, UserInfo } from '@/utils/schema';
 import { getGroupUser, delFriend, quitGroup } from '@/api/index';
-import { saveGroupUser, saveUser } from '@/utils/dbsave';
+import { getImg, saveGroupUser, saveUser } from '@/utils/dbsave';
 
 import { useRouter } from 'vue-router';
 import { showNotify } from 'vant';
@@ -142,14 +142,14 @@ const state = reactive({
     },
     tipsData: {
         friend: 0,
-        friendProps:{
-            'show-zero':false,
-            'max':99,
+        friendProps: {
+            'show-zero': false,
+            'max': 99,
         },
         group: 0,
-        groupProps:{
-            'show-zero':false,
-            'max':99,
+        groupProps: {
+            'show-zero': false,
+            'max': 99,
         },
     }
 });
@@ -227,8 +227,8 @@ const clickLeft = () => {
     changeTabbar()
     state.showType = 0
     state.talkData = {
-        msgType: 0,                     
-        toId: 0, 
+        msgType: 0,
+        toId: 0,
         name: "",
         icon: "",
     }
@@ -460,9 +460,9 @@ const loadGroupManage = (data: any) => {
         }
     }
 
-    if (data.MsgMedia == 35 && state.talkData.msgType == 2){
+    if (data.MsgMedia == 35 && state.talkData.msgType == 2) {
         const res = JSON.parse(data.Content.Data);
-        if (res.group.GroupId == state.talkData.toId){
+        if (res.group.GroupId == state.talkData.toId) {
             clickLeft()
         }
     }
@@ -484,11 +484,13 @@ const childOperateFriend = async (msgType: number, toId: number) => {
         return
     }
     const temp = await getItemById(state.db, "users", toId)
+
+    const icon = await getImg(state.db, temp.Avatar)
     state.talkData = {
         msgType: msgType,
         toId: toId,
         name: temp.Username,
-        icon: temp.Avatar
+        icon: icon
     }
     state.showType = 1
 }
@@ -502,11 +504,12 @@ const childOperateGroup = async (msgType: number, toId: number) => {
         return
     }
     const temp = await getItemById(state.db, "groups", toId)
+    const icon = await getImg(state.db, temp.Icon)
     state.talkData = {
         msgType: msgType,
         toId: toId,
         name: temp.Name,
-        icon: temp.Icon
+        icon: icon
     }
 
     const contacts = await getByIndex(state.db, "group_members", 'GroupId', toId)
@@ -631,11 +634,12 @@ const childOperatePhoneResponse = async () => {
 
 </script>
 <style scoped>
-.chat-title .van-image{
-    float:left;
+.chat-title .van-image {
+    float: left;
 }
-.chat-title span{
-    float:left;
+
+.chat-title span {
+    float: left;
     margin-left: 5px;
 }
 </style>

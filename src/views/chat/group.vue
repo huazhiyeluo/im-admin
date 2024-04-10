@@ -101,36 +101,36 @@ const loadGroupManage = (data: any) => {
 const loadGroupManageCreate = (res: any) => {
   const existingGroupIndex = state.groups.findIndex(group => group.GroupId === res.group.GroupId);
   if (existingGroupIndex !== -1) {
-      state.groups[existingGroupIndex] = res.group;
+    state.groups[existingGroupIndex] = res.group;
   } else {
-      state.groups.unshift(res.group);
+    state.groups.unshift(res.group);
   }
   // 添加或更新群组的操作时间戳
   res.group.OperateTime = Math.floor(new Date().getTime() / 1000);
   // 保存群组信息到数据库
   saveGroup(props.db, res.group);
   if (res.user) {
-      // 如果存在用户信息，则保存用户信息到数据库，并保存用户到群组的关联关系
-      saveUser(props.db, res.user);
-      saveGroupUser(props.db, res.group.GroupId, res.user);
+    // 如果存在用户信息，则保存用户信息到数据库，并保存用户到群组的关联关系
+    saveUser(props.db, res.user);
+    saveGroupUser(props.db, res.group.GroupId, res.user);
   }
 }
 
 const loadGroupManageAgree = (res: any) => {
   const existingGroupIndex = state.groups.findIndex(group => group.GroupId === res.group.GroupId);
   if (existingGroupIndex !== -1) {
-      state.groups[existingGroupIndex] = res.group;
+    state.groups[existingGroupIndex] = res.group;
   } else {
-      state.groups.unshift(res.group);
+    state.groups.unshift(res.group);
   }
   // 添加或更新群组的操作时间戳
   res.group.OperateTime = Math.floor(new Date().getTime() / 1000);
   // 保存群组信息到数据库
   saveGroup(props.db, res.group);
   if (res.user) {
-      // 如果存在用户信息，则保存用户信息到数据库，并保存用户到群组的关联关系
-      saveUser(props.db, res.user);
-      saveGroupUser(props.db, res.group.GroupId, res.user);
+    // 如果存在用户信息，则保存用户信息到数据库，并保存用户到群组的关联关系
+    saveUser(props.db, res.user);
+    saveGroupUser(props.db, res.group.GroupId, res.user);
   }
 }
 
@@ -170,7 +170,7 @@ const loadGroupMsg = async (data: MsgData, num: number = 0) => {
 
       const newData = JSON.parse(JSON.stringify(state.groups[key]));
       const temp = await getItemById(props.db, "groups", state.groups[key].GroupId)
-      if (temp){
+      if (temp) {
         newData.Icon = temp.Icon
       }
       saveGroup(props.db, newData)
@@ -209,10 +209,10 @@ const goChat = async (toId: number) => {
   for (const key in state.groups) {
     if (state.groups[key].GroupId == toId) {
       emit("update-parameter-group-tips", -state.groups[key].Tips)
-      if (state.groups[key].Tips >0){
+      if (state.groups[key].Tips > 0) {
         state.groups[key].Tips = 0
         const temp = await getItemById(props.db, "groups", state.groups[key].GroupId)
-        if (temp){
+        if (temp) {
           temp.Tips = 0
           saveGroup(props.db, temp)
         }
