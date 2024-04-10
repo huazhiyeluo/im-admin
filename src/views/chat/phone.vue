@@ -361,6 +361,7 @@ defineExpose({
 
 .remote-video {
     height: 100%;
+    transform: scaleX(-1);
 }
 
 .local-video {
@@ -369,6 +370,7 @@ defineExpose({
     position: absolute;
     right: 0;
     top: 0;
+    transform: scaleX(-1);
 }
 
 .phoneing-quit {
