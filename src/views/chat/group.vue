@@ -1,13 +1,13 @@
 <template>
   <div class="contact-list">
-    <div class="contact-item" v-if="state.groups.length > 0" v-for="item in state.groups" @click="goChat(item.GroupId)">
-      <van-image width="50" height="50" round :src="item.Icon" />
+    <div class="contact-item" v-if="state.groups.length > 0" v-for="item in state.groups" @click="goChat(item.groupId)">
+      <van-image width="50" height="50" round :src="item.icon" />
       <div class="user-details">
-        <div :class="getClass(item)">{{ item.Name }}[{{ item.Num }}]</div>
+        <div :class="getClass(item)">{{ item.name }}[{{ item.num }}]</div>
         <div class="content">{{ getContent(item) }}</div>
       </div>
       <div class="user-operate">
-        <van-badge :content="item.Tips" :color="item.Tips > 0 ? 'red' : '#ccc'" :max="99" />
+        <van-badge :content="item.tips" :color="item.tips > 0 ? 'red' : '#ccc'" :max="99" />
       </div>
     </div>
     <van-empty description="暂无群组" v-if="state.groups.length == 0" />
@@ -53,104 +53,104 @@ const getClass = (item: GroupData) => {
 
 // 初始化表格数据
 const getList = async () => {
-  getGroupList({ fromId: state.selftUserInfo.Uid }).then(async (response: any) => {
+  getGroupList({ fromId: state.selftUserInfo.uid }).then(async (response: any) => {
     if (response.data) {
       state.groups = response.data;
       let totalTips = 0
       for (const key in state.groups) {
-        const temp = await getItemById(props.db, "groups", state.groups[key].GroupId)
+        const temp = await getItemById(props.db, "groups", state.groups[key].groupId)
         if (temp) {
-          state.groups[key].OperateTime = temp.OperateTime
-          state.groups[key].Tips = temp.Tips
-          state.groups[key].MsgMedia = temp.MsgMedia
-          state.groups[key].Content = temp.Content
-          totalTips += temp.Tips
+          state.groups[key].operateTime = temp.operateTime
+          state.groups[key].tips = temp.tips
+          state.groups[key].msgMedia = temp.msgMedia
+          state.groups[key].content = temp.content
+          totalTips += temp.tips
         } else {
-          state.groups[key].OperateTime = 0
-          state.groups[key].Tips = 0
-          state.groups[key].MsgMedia = 1
-          state.groups[key].Content = { "Data": "", "Url": "", "Name": "" }
+          state.groups[key].operateTime = 0
+          state.groups[key].tips = 0
+          state.groups[key].msgMedia = 1
+          state.groups[key].content = { "data": "", "url": "", "name": "" }
         }
         saveGroup(props.db, state.groups[key])
-        state.groups[key].Icon = await getImg(props.db, state.groups[key].Icon)
+        state.groups[key].icon = await getImg(props.db, state.groups[key].icon)
       }
-      state.groups.sort((a, b) => b.OperateTime - a.OperateTime);
+      state.groups.sort((a, b) => b.operateTime - a.operateTime);
       emit("update-parameter-group-tips", totalTips)
     }
   });
 };
 
 const loadGroupManage = (data: any) => {
-  const res = JSON.parse(data.Content.Data);
+  const res = JSON.parse(data.content.data);
   if (res.group) {
-    if (data.MsgMedia == 30) {
+    if (data.msgMedia == 30) {
       loadGroupManageCreate(res)
     }
-    if (data.MsgMedia == 32) {
+    if (data.msgMedia == 32) {
       loadGroupManageAgree(res)
     }
-    if (data.MsgMedia == 34) {
+    if (data.msgMedia == 34) {
       loadGroupManageQuit(res)
     }
-    if (data.MsgMedia == 35) {
+    if (data.msgMedia == 35) {
       loadGroupManageDisband(res)
     }
   }
 }
 
 const loadGroupManageCreate = (res: any) => {
-  const existingGroupIndex = state.groups.findIndex(group => group.GroupId === res.group.GroupId);
+  const existingGroupIndex = state.groups.findIndex(group => group.groupId === res.group.groupId);
   if (existingGroupIndex !== -1) {
     state.groups[existingGroupIndex] = res.group;
   } else {
     state.groups.unshift(res.group);
   }
   // 添加或更新群组的操作时间戳
-  res.group.OperateTime = Math.floor(new Date().getTime() / 1000);
+  res.group.operateTime = Math.floor(new Date().getTime() / 1000);
   // 保存群组信息到数据库
   saveGroup(props.db, res.group);
   if (res.user) {
     // 如果存在用户信息，则保存用户信息到数据库，并保存用户到群组的关联关系
     saveUser(props.db, res.user);
-    saveGroupUser(props.db, res.group.GroupId, res.user);
+    saveGroupUser(props.db, res.group.groupId, res.user);
   }
 }
 
 const loadGroupManageAgree = (res: any) => {
-  const existingGroupIndex = state.groups.findIndex(group => group.GroupId === res.group.GroupId);
+  const existingGroupIndex = state.groups.findIndex(group => group.groupId === res.group.groupId);
   if (existingGroupIndex !== -1) {
     state.groups[existingGroupIndex] = res.group;
   } else {
     state.groups.unshift(res.group);
   }
   // 添加或更新群组的操作时间戳
-  res.group.OperateTime = Math.floor(new Date().getTime() / 1000);
+  res.group.operateTime = Math.floor(new Date().getTime() / 1000);
   // 保存群组信息到数据库
   saveGroup(props.db, res.group);
   if (res.user) {
     // 如果存在用户信息，则保存用户信息到数据库，并保存用户到群组的关联关系
     saveUser(props.db, res.user);
-    saveGroupUser(props.db, res.group.GroupId, res.user);
+    saveGroupUser(props.db, res.group.groupId, res.user);
   }
 }
 
 const loadGroupManageQuit = (res: any) => {
-  if (state.selftUserInfo.Uid === res.user.Uid) { // 自己的情况下要去掉组的消息
-    delGroup(props.db, res.group.GroupId);
-    state.groups = state.groups.filter(group => group.GroupId !== res.group.GroupId);
+  if (state.selftUserInfo.uid === res.user.uid) { // 自己的情况下要去掉组的消息
+    delGroup(props.db, res.group.groupId);
+    state.groups = state.groups.filter(group => group.groupId !== res.group.groupId);
   } else {
-    const existingGroupIndex = state.groups.findIndex(group => group.GroupId === res.group.GroupId);
+    const existingGroupIndex = state.groups.findIndex(group => group.groupId === res.group.groupId);
     if (existingGroupIndex !== -1) {
       state.groups[existingGroupIndex] = res.group;
     }
   }
-  delGroupUser(props.db, res.group.GroupId, res.user.Uid);
+  delGroupUser(props.db, res.group.groupId, res.user.uid);
 }
 
 const loadGroupManageDisband = (res: any) => {
-  delGroup(props.db, res.group.GroupId);
-  state.groups = state.groups.filter(group => group.GroupId !== res.group.GroupId);
-  delGroupAllUser(props.db, res.group.GroupId);
+  delGroup(props.db, res.group.groupId);
+  state.groups = state.groups.filter(group => group.groupId !== res.group.groupId);
+  delGroupAllUser(props.db, res.group.groupId);
 }
 
 
@@ -161,17 +161,17 @@ const loadGroupMsg = async (data: MsgData, num: number = 0) => {
     audio.play();
   }
   for (const key in state.groups) {
-    if (state.groups[key].GroupId == data.ToId) {
-      state.groups[key].OperateTime = Math.floor(new Date().getTime() / 1000)
-      state.groups[key].Tips += num
-      state.groups[key].MsgMedia = data.MsgMedia
-      state.groups[key].Content = data.Content
-      state.groups.sort((a, b) => b.OperateTime - a.OperateTime);
+    if (state.groups[key].groupId == data.toId) {
+      state.groups[key].operateTime = Math.floor(new Date().getTime() / 1000)
+      state.groups[key].tips += num
+      state.groups[key].msgMedia = data.msgMedia
+      state.groups[key].content = data.content
+      state.groups.sort((a, b) => b.operateTime - a.operateTime);
 
       const newData = JSON.parse(JSON.stringify(state.groups[key]));
-      const temp = await getItemById(props.db, "groups", state.groups[key].GroupId)
+      const temp = await getItemById(props.db, "groups", state.groups[key].groupId)
       if (temp) {
-        newData.Icon = temp.Icon
+        newData.icon = temp.icon
       }
       saveGroup(props.db, newData)
       break;
@@ -181,9 +181,9 @@ const loadGroupMsg = async (data: MsgData, num: number = 0) => {
 }
 
 const getContent = (item: GroupData) => {
-  switch (item.MsgMedia) {
+  switch (item.msgMedia) {
     case 1:
-      return item.Content.Data;
+      return item.content.data;
     case 2:
       return '[图片]';
     case 3:
@@ -197,9 +197,9 @@ const getContent = (item: GroupData) => {
     case 10:
     case 11:
     case 13:
-      return '[语音通话]' + item.Content.Data;
+      return '[语音通话]' + item.content.data;
     case 12:
-      return '[语音通话]通话时长: ' + formatSeconds(item.Content.Data);
+      return '[语音通话]通话时长: ' + formatSeconds(item.content.data);
     default:
       return '';
   }
@@ -207,13 +207,13 @@ const getContent = (item: GroupData) => {
 
 const goChat = async (toId: number) => {
   for (const key in state.groups) {
-    if (state.groups[key].GroupId == toId) {
-      emit("update-parameter-group-tips", -state.groups[key].Tips)
-      if (state.groups[key].Tips > 0) {
-        state.groups[key].Tips = 0
-        const temp = await getItemById(props.db, "groups", state.groups[key].GroupId)
+    if (state.groups[key].groupId == toId) {
+      emit("update-parameter-group-tips", -state.groups[key].tips)
+      if (state.groups[key].tips > 0) {
+        state.groups[key].tips = 0
+        const temp = await getItemById(props.db, "groups", state.groups[key].groupId)
         if (temp) {
-          temp.Tips = 0
+          temp.tips = 0
           saveGroup(props.db, temp)
         }
       }

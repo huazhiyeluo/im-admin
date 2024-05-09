@@ -1,86 +1,86 @@
 <template>
     <div class="msg-list">
         <div v-for="(item, key) in state.applys" v-if="state.applys.length > 0">
-            <div class="contact-item" v-if="item.Type == 1 && item.FromId == state.selftUserInfo.Uid">
-                <van-image width="50" height="50" round :src="item.ToIcon" />
+            <div class="contact-item" v-if="item.type == 1 && item.fromId == state.selftUserInfo.uid">
+                <van-image width="50" height="50" round :src="item.toIcon" />
                 <div class="user-details">
-                    <div class="user-name">{{ item.ToName }}</div>
+                    <div class="user-name">{{ item.toName }}</div>
                     <div class="status">
                         <span>请求添加对方为好友</span>
-                        <span>，附言：{{ item.Reason }}</span>
+                        <span>，附言：{{ item.reason }}</span>
                     </div>
                 </div>
                 <div class="user-operate">
-                    <div class="operate" v-if="item.Status == 0">
+                    <div class="operate" v-if="item.status == 0">
                         <div class="operate-right-30">等待验证</div>
                     </div>
-                    <div class="operate" v-if="item.Status == 1">
+                    <div class="operate" v-if="item.status == 1">
                         <div class="operate-right">已被同意</div>
                     </div>
-                    <div class="operate" v-if="item.Status == 2">
+                    <div class="operate" v-if="item.status == 2">
                         <div class="operate-right">已被拒绝</div>
                     </div>
                 </div>
             </div>
-            <div class="contact-item" v-if="item.Type == 1 && item.ToId == state.selftUserInfo.Uid">
-                <van-image width="50" height="50" round :src="item.FromIcon" />
+            <div class="contact-item" v-if="item.type == 1 && item.toId == state.selftUserInfo.uid">
+                <van-image width="50" height="50" round :src="item.fromIcon" />
                 <div class="user-details">
-                    <div class="user-name">{{ item.FromName }}</div>
+                    <div class="user-name">{{ item.fromName }}</div>
                     <div class="status">
                         <span>对方请求添加你为好友</span>
-                        <span>，附言：{{ item.Reason }}</span>
+                        <span>，附言：{{ item.reason }}</span>
                     </div>
                 </div>
                 <div class="user-operate">
-                    <div class="operate" v-if="item.Status == 0"><van-button type="success" size="small"
-                            @click="goOperate(key, item.Id, 1)">同意</van-button><van-button size="small"
-                            @click="goOperate(key, item.Id, 2)">拒绝</van-button></div>
-                    <div class="operate" v-if="item.Status == 1">
+                    <div class="operate" v-if="item.status == 0"><van-button type="success" size="small"
+                            @click="goOperate(key, item.id, 1)">同意</van-button><van-button size="small"
+                            @click="goOperate(key, item.id, 2)">拒绝</van-button></div>
+                    <div class="operate" v-if="item.status == 1">
                         <div class="operate-right">已同意</div>
                     </div>
-                    <div class="operate" v-if="item.Status == 2">
+                    <div class="operate" v-if="item.status == 2">
                         <div class="operate-right">已拒绝</div>
                     </div>
                 </div>
             </div>
-            <div class="contact-item" v-if="item.Type == 2 && item.FromId == state.selftUserInfo.Uid">
-                <van-image width="50" height="50" round :src="item.ToIcon" />
+            <div class="contact-item" v-if="item.type == 2 && item.fromId == state.selftUserInfo.uid">
+                <van-image width="50" height="50" round :src="item.toIcon" />
                 <div class="user-details">
-                    <div class="user-name">{{ item.ToName }}</div>
+                    <div class="user-name">{{ item.toName }}</div>
                     <div class="status">
                         <span>请求加入群</span>
-                        <span>，附言：{{ item.Reason }}</span>
+                        <span>，附言：{{ item.reason }}</span>
                     </div>
                 </div>
                 <div class="user-operate">
-                    <div class="operate" v-if="item.Status == 0">
+                    <div class="operate" v-if="item.status == 0">
                         <div class="operate-right-30">等待验证</div>
                     </div>
-                    <div class="operate" v-if="item.Status == 1">
+                    <div class="operate" v-if="item.status == 1">
                         <div class="operate-right">已被同意</div>
                     </div>
-                    <div class="operate" v-if="item.Status == 2">
+                    <div class="operate" v-if="item.status == 2">
                         <div class="operate-right">已被拒绝</div>
                     </div>
                 </div>
             </div>
-            <div class="contact-item" v-if="item.Type == 2 && item.FromId != state.selftUserInfo.Uid">
-                <van-image width="50" height="50" round :src="item.ToIcon" />
+            <div class="contact-item" v-if="item.type == 2 && item.fromId != state.selftUserInfo.uid">
+                <van-image width="50" height="50" round :src="item.toIcon" />
                 <div class="user-details">
-                    <div class="user-name">{{ item.ToName }}</div>
+                    <div class="user-name">{{ item.toName }}</div>
                     <div class="status">
-                        <span><span style="color:red;">{{ item.FromName }}</span>请求加入群</span>
-                        <span>，附言：{{ item.Reason }}</span>
+                        <span><span style="color:red;">{{ item.fromName }}</span>请求加入群</span>
+                        <span>，附言：{{ item.reason }}</span>
                     </div>
                 </div>
                 <div class="user-operate">
-                    <div class="operate" v-if="item.Status == 0"><van-button type="success" size="small"
-                            @click="goOperate(key, item.Id, 1)">同意</van-button><van-button size="small"
-                            @click="goOperate(key, item.Id, 2)">拒绝</van-button></div>
-                    <div class="operate" v-if="item.Status == 1">
+                    <div class="operate" v-if="item.status == 0"><van-button type="success" size="small"
+                            @click="goOperate(key, item.id, 1)">同意</van-button><van-button size="small"
+                            @click="goOperate(key, item.id, 2)">拒绝</van-button></div>
+                    <div class="operate" v-if="item.status == 1">
                         <div class="operate-right">已同意</div>
                     </div>
-                    <div class="operate" v-if="item.Status == 2">
+                    <div class="operate" v-if="item.status == 2">
                         <div class="operate-right">已拒绝</div>
                     </div>
                 </div>
@@ -122,14 +122,14 @@ const init = () => {
 // 初始化表格数据
 const getList = async () => {
     let nowtime = Math.floor(Date.now() / 1000)
-    const temps = await getByTimeIndex(props.db, "apply", "OperateTime", nowtime - 24 * 3600 * 30, nowtime)
+    const temps = await getByTimeIndex(props.db, "apply", "operateTime", nowtime - 24 * 3600 * 30, nowtime)
     if (temps.length > 0) {
         for (let temp of temps) {
             const applyData = temp as unknown as ApplyData
             state.applys.unshift(applyData);
         }
     } else {
-        getApplyList({ uid: state.selftUserInfo.Uid }).then((response: any) => {
+        getApplyList({ uid: state.selftUserInfo.uid }).then((response: any) => {
             if (response.data) {
                 state.applys = response.data;
             }
@@ -147,7 +147,7 @@ const goOperate = async (key: number, id: number, status: number) => {
             } else if (status == 2) {
                 showSuccessToast('已拒绝');
             }
-            state.applys[key].Status = status
+            state.applys[key].status = status
 
         } else {
             showFailToast(response.msg);
@@ -156,9 +156,9 @@ const goOperate = async (key: number, id: number, status: number) => {
 }
 
 const loadMsgManage = (data: any) => {
-    const res = JSON.parse(data.Content.Data);
+    const res = JSON.parse(data.content.data);
     if (res.apply) {
-        const existingApplyIndex = state.applys.findIndex(apply => apply.Id === res.apply.Id);
+        const existingApplyIndex = state.applys.findIndex(apply => apply.id === res.apply.id);
         if (existingApplyIndex !== -1) {
             state.applys[existingApplyIndex] = res.apply;
         } else {
@@ -170,8 +170,8 @@ const loadMsgManage = (data: any) => {
 
 const clearMsg = () => {
     state.applys = []
-    deleteByMultipleIndexes(props.db, 'apply', [{ indexName: "Type", value: 1 }])
-    deleteByMultipleIndexes(props.db, 'apply', [{ indexName: "Type", value: 2 }])
+    deleteByMultipleIndexes(props.db, 'apply', [{ indexName: "type", value: 1 }])
+    deleteByMultipleIndexes(props.db, 'apply', [{ indexName: "type", value: 2 }])
 }
 
 

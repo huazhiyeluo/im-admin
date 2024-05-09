@@ -1,14 +1,14 @@
 <template>
   <div class="contact-list">
-    <div class="contact-item" v-if="state.friends.length > 0" v-for="item in state.friends" @click="goChat(item.Uid)">
-      <van-image width="50" height="50" round :src="item.Avatar" />
+    <div class="contact-item" v-if="state.friends.length > 0" v-for="item in state.friends" @click="goChat(item.uid)">
+      <van-image width="50" height="50" round :src="item.avatar" />
       <div class="user-details">
-        <div class="user-name">{{ item.Username }}[{{ item.Uid }}]</div>
-        <div class="content"><span :class="item.IsOnline ? 'status online' : 'status offline'"></span>{{
-      getContent(item) }}</div>
+        <div class="user-name">{{ item.username }}[{{ item.uid }}]</div>
+        <div class="content"><span :class="item.isOnline ? 'status online' : 'status offline'"></span>{{
+      getcontent(item) }}</div>
       </div>
       <div class="user-operate">
-        <van-badge :content="item.Tips" :color="item.Tips > 0 ? 'red' : '#ccc'" :max="99" />
+        <van-badge :content="item.tips" :color="item.tips > 0 ? 'red' : '#ccc'" :max="99" />
       </div>
     </div>
     <van-empty description="暂无好友" v-if="state.friends.length == 0" />
@@ -46,30 +46,30 @@ const init = () => {
 
 // 初始化表格数据
 const getList = async () => {
-  getFriendList({ fromId: state.selftUserInfo.Uid }).then(async (response: any) => {
+  getFriendList({ fromId: state.selftUserInfo.uid }).then(async (response: any) => {
     if (response.data) {
       state.friends = response.data;
-      let totalTips = 0
+      let totaltips = 0
       for (const key in state.friends) {
-        const temp = await getItemById(props.db, "users", state.friends[key].Uid)
+        const temp = await getItemById(props.db, "users", state.friends[key].uid)
         if (temp) {
-          state.friends[key].OperateTime = temp.OperateTime
-          state.friends[key].Tips = temp.Tips
-          state.friends[key].MsgMedia = temp.MsgMedia
-          state.friends[key].Content = temp.Content
-          totalTips += temp.Tips
+          state.friends[key].operateTime = temp.operateTime
+          state.friends[key].tips = temp.tips
+          state.friends[key].msgMedia = temp.msgMedia
+          state.friends[key].content = temp.content
+          totaltips += temp.tips
         } else {
-          state.friends[key].OperateTime = 0
-          state.friends[key].Tips = 0
-          state.friends[key].MsgMedia = 1
-          state.friends[key].Content = { "Data": "", "Url": "", "Name": "" }
+          state.friends[key].operateTime = 0
+          state.friends[key].tips = 0
+          state.friends[key].msgMedia = 1
+          state.friends[key].content = { "data": "", "Url": "", "Name": "" }
         }
         saveUser(props.db, state.friends[key])
-        state.friends[key].Avatar = await getImg(props.db, state.friends[key].Avatar)
+        state.friends[key].avatar = await getImg(props.db, state.friends[key].avatar)
       }
-      state.friends.sort((a, b) => b.OperateTime - a.OperateTime);
+      state.friends.sort((a, b) => b.operateTime - a.operateTime);
 
-      emit("update-parameter-friend-tips", totalTips)
+      emit("update-parameter-friend-tips", totaltips)
     }
   });
 };
@@ -78,21 +78,21 @@ const getList = async () => {
 
 //用户状态
 const loadFriendStatus = async (data: any) => {
-  if (data.ToId === state.selftUserInfo.Uid) {
-    const friend = state.friends.find(friend => friend.Uid === data.FromId);
+  if (data.toId === state.selftUserInfo.uid) {
+    const friend = state.friends.find(friend => friend.uid === data.fromId);
     if (friend) {
-      if (data.MsgMedia === 11) {
-        friend.IsOnline = true;
+      if (data.msgMedia === 11) {
+        friend.isOnline = true;
         // 播放声音
         const audio = new Audio('/src/assets/voice/1.mp3');
         audio.play();
-      } else if (data.MsgMedia === 12) {
-        friend.IsOnline = false;
+      } else if (data.msgMedia === 12) {
+        friend.isOnline = false;
       }
 
-      const temp = await getItemById(props.db, "users", data.FromId)
+      const temp = await getItemById(props.db, "users", data.fromId)
       if (temp){
-        temp.IsOnline = friend.IsOnline
+        temp.isOnline = friend.isOnline
       }
       saveUser(props.db, temp);
     }
@@ -101,16 +101,16 @@ const loadFriendStatus = async (data: any) => {
 
 //用户信息
 const loadFriendInfo = async (data: any) => {
-  const res = JSON.parse(data.Content.Data);
-  if (res.user.Uid !== state.selftUserInfo.Uid) { 
-    const existingIndex = state.friends.findIndex(obj => obj.Uid === res.user.Uid);
+  const res = JSON.parse(data.content.data);
+  if (res.user.uid !== state.selftUserInfo.uid) { 
+    const existingIndex = state.friends.findIndex(obj => obj.uid === res.user.uid);
 
-    const temp = await getItemById(props.db, "users", res.user.Uid)
+    const temp = await getItemById(props.db, "users", res.user.uid)
     if (temp) {
-      res.user.OperateTime = temp.OperateTime
-      res.user.Tips = temp.Tips
-      res.user.MsgMedia = temp.MsgMedia
-      res.user.Content = temp.Content
+      res.user.operateTime = temp.operateTime
+      res.user.tips = temp.tips
+      res.user.msgMedia = temp.msgMedia
+      res.user.content = temp.content
     }
 
     if (existingIndex !== -1) {
@@ -123,12 +123,12 @@ const loadFriendInfo = async (data: any) => {
 }
 
 const loadFriendManage = (data: any) => {
-  const res = JSON.parse(data.Content.Data);
+  const res = JSON.parse(data.content.data);
   if (res.user) {
-    if (data.MsgMedia == 22) {
+    if (data.msgMedia == 22) {
       loadFriendManageAgree(res)
     }
-    if (data.MsgMedia == 24) {
+    if (data.msgMedia == 24) {
       loadFriendManageDelete(res)
     }
   }
@@ -137,18 +137,18 @@ const loadFriendManage = (data: any) => {
 
 
 const loadFriendManageAgree = (res: any) => {
-  const existingIndex = state.friends.findIndex(obj => obj.Uid === res.user.Uid);
+  const existingIndex = state.friends.findIndex(obj => obj.uid === res.user.uid);
   if (existingIndex !== -1) {
     state.friends[existingIndex] = res.user;
   } else {
     state.friends.unshift(res.user);
   }
-  res.user.OperateTime = Math.floor(new Date().getTime() / 1000);
+  res.user.operateTime = Math.floor(new Date().getTime() / 1000);
   saveUser(props.db, res.user);
 }
 
 const loadFriendManageDelete = (res: any) => {
-  state.friends = state.friends.filter(obj => obj.Uid !== res.user.Uid);
+  state.friends = state.friends.filter(obj => obj.uid !== res.user.uid);
 }
 
 
@@ -160,17 +160,17 @@ const loadFriendMsg = async (data: MsgData, num: number = 0) => {
     audio.play();
   }
   for (const key in state.friends) {
-    if (state.friends[key].Uid == data.FromId || state.friends[key].Uid == data.ToId) {
-      state.friends[key].OperateTime = Math.floor(new Date().getTime() / 1000)
-      state.friends[key].Tips += num
-      state.friends[key].MsgMedia = data.MsgMedia
-      state.friends[key].Content = data.Content
-      state.friends.sort((a, b) => b.OperateTime - a.OperateTime);
+    if (state.friends[key].uid == data.fromId || state.friends[key].uid == data.toId) {
+      state.friends[key].operateTime = Math.floor(new Date().getTime() / 1000)
+      state.friends[key].tips += num
+      state.friends[key].msgMedia = data.msgMedia
+      state.friends[key].content = data.content
+      state.friends.sort((a, b) => b.operateTime - a.operateTime);
 
       const newData = JSON.parse(JSON.stringify(state.friends[key]));
-      const temp = await getItemById(props.db, "users", state.friends[key].Uid)
+      const temp = await getItemById(props.db, "users", state.friends[key].uid)
       if (temp){
-        newData.Avatar = temp.Avatar
+        newData.icon = temp.icon
       }
       saveUser(props.db, newData)
       break;
@@ -180,10 +180,10 @@ const loadFriendMsg = async (data: MsgData, num: number = 0) => {
 }
 
 
-const getContent = (item: FriendData) => {
-  switch (item.MsgMedia) {
+const getcontent = (item: FriendData) => {
+  switch (item.msgMedia) {
     case 1:
-      return item.Content.Data;
+      return item.content.data;
     case 2:
       return '[图片]';
     case 3:
@@ -197,9 +197,9 @@ const getContent = (item: FriendData) => {
     case 10:
     case 11:
     case 13:
-      return '[语音通话]' + item.Content.Data;
+      return '[语音通话]' + item.content.data;
     case 12:
-      return '[语音通话]通话时长: ' + formatSeconds(item.Content.Data);
+      return '[语音通话]通话时长: ' + formatSeconds(item.content.data);
     default:
       return '';
   }
@@ -208,13 +208,13 @@ const getContent = (item: FriendData) => {
 
 const goChat = async (toId: number) => {
   for (const key in state.friends) {
-    if (state.friends[key].Uid == toId) {
-      emit("update-parameter-friend-tips", -state.friends[key].Tips)
-      if (state.friends[key].Tips > 0) {
-        state.friends[key].Tips = 0
-        const temp = await getItemById(props.db, "users", state.friends[key].Uid)
+    if (state.friends[key].uid == toId) {
+      emit("update-parameter-friend-tips", -state.friends[key].tips)
+      if (state.friends[key].tips > 0) {
+        state.friends[key].tips = 0
+        const temp = await getItemById(props.db, "users", state.friends[key].uid)
         if (temp){
-          temp.Tips = 0
+          temp.tips = 0
           saveUser(props.db, temp)
         }
       }

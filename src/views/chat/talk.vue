@@ -2,14 +2,14 @@
     <div>
         <div class="chat-messages" id="chatMessages" ref="chatMessages">
             <div v-for="item in state.historyContentList[state.rkey]" :class="getClass(item)">
-                <van-image width="50" height="50" round :src="item.Avatar" />
+                <van-image width="50" height="50" round :src="item.avatar" />
                 <div class="message-content">
-                    <p v-if="item.MsgMedia == 1">{{ getContent(item) }}</p>
-                    <p v-if="item.MsgMedia == 2">
+                    <p v-if="item.msgMedia == 1">{{ getContent(item) }}</p>
+                    <p v-if="item.msgMedia == 2">
                         <van-image width="100" height="100" :src="getContent(item)"
                             @click="previewPic(getContent(item))" />
                     </p>
-                    <p v-if="item.MsgMedia == 3">
+                    <p v-if="item.msgMedia == 3">
                         <audio controls>
                             <source :src="getContent(item)" type="audio/mpeg">
                             <source :src="getContent(item)" type="audio/ogg">
@@ -17,34 +17,34 @@
                             Your browser does not support the audio element.
                         </audio>
                     </p>
-                    <p v-if="item.MsgMedia == 4">
+                    <p v-if="item.msgMedia == 4">
                         <video width="100%" height="100%" controls>
                             <source :src="getContent(item)" type="video/mp4">
                             <source :src="getContent(item)" type="video/ogg">
                             Your browser does not support the video element.
                         </video>
                     </p>
-                    <p v-if="item.MsgMedia == 5">
+                    <p v-if="item.msgMedia == 5">
                         <van-icon name="description-o" />
-                        <a :href="item.Content.Url" download>{{ item.Content.Name }}</a>
+                        <a :href="item.content.url" download>{{ item.content.name }}</a>
                     </p>
-                    <p v-if="item.MsgMedia == 6">
+                    <p v-if="item.msgMedia == 6">
                         <van-image width="40" height="40" round :src="getContent(item)"
                             @click="previewPic(getContent(item))" />
                     </p>
-                    <p v-if="item.MsgMedia == 10">
+                    <p v-if="item.msgMedia == 10">
                         <van-icon name="phone-o" />{{ getContent(item) }}
                     </p>
-                    <p v-if="item.MsgMedia == 11">
+                    <p v-if="item.msgMedia == 11">
                         <van-icon name="phone-o" />{{ getContent(item) }}
                     </p>
-                    <p v-if="item.MsgMedia == 12">
+                    <p v-if="item.msgMedia == 12">
                         <van-icon name="phone-o" />通话时长: {{ formatSeconds(getContent(item)) }}
                     </p>
-                    <p v-if="item.MsgMedia == 13">
+                    <p v-if="item.msgMedia == 13">
                         <van-icon name="phone-o" />{{ getContent(item) }}
                     </p>
-                    <span class="message-time">{{ formatTime(item.CreateTime, "hh:mm") }}</span>
+                    <span class="message-time">{{ formatTime(item.createTime, "hh:mm") }}</span>
                     <div class="status-icon read"></div>
                 </div>
             </div>
@@ -60,8 +60,8 @@
                 <van-icon name="guide-o" :size="30" @click="sendTextMessage" v-show="!state.isInputEmpty" />
             </div>
             <div class="chat-smile" v-if="state.isShowSmile" ref="smileRef">
-                <van-image v-for="item in state.emojs" width="30" height="30" :src="item.Newurl"
-                    @click="sendEmojsMessage(item.Url)" />
+                <van-image v-for="item in state.emojs" width="30" height="30" :src="item.newurl"
+                    @click="sendEmojsMessage(item.url)" />
             </div>
             <div class="chat-plugins" v-if="state.isShowPlugin" ref="pluginRef">
                 <div class="plugins-item">
@@ -88,7 +88,7 @@
                         视频
                     </van-uploader>
                 </div>
-                <div class="plugins-item">
+                <div class="plugins-item" v-if="props.talkData.msgType == 1">
                     <van-icon name="phone-o" class="icon" @click="goPhone" />
                     <div>电话</div>
                 </div>
@@ -168,11 +168,11 @@ const init = async () => {
         const num = String(i).padStart(2, '0');
         const url = `/src/assets/images/emojs/${num}.gif`
         const newurl = await getImg(props.db, url)
-        const temp: Emojs = { "Url": url, "Newurl": newurl }
+        const temp: Emojs = { "url": url, "newurl": newurl }
         state.emojs.push(temp)
     }
     if (props.talkData.msgType && props.talkData.toId) {
-        state.rkey = getKey(props.talkData.msgType, state.selftUserInfo.Uid, props.talkData.toId)
+        state.rkey = getKey(props.talkData.msgType, state.selftUserInfo.uid, props.talkData.toId)
         setChatList()
     }
 };
@@ -210,8 +210,8 @@ const getKey = (msgType: number, fromId: number, toId: number) => {
 }
 
 const getClass = (item: MsgData) => {
-    const classstr = item.FromId === state.selftUserInfo.Uid ? 'message user-message' : 'message other-message'
-    if (item.MsgType == 1 && item.MsgMedia == 10) {
+    const classstr = item.fromId === state.selftUserInfo.uid ? 'message user-message' : 'message other-message'
+    if (item.msgType == 1 && item.msgMedia == 10) {
         return "message user-message"
     }
     return classstr
@@ -220,16 +220,16 @@ const getClass = (item: MsgData) => {
 const setChatList = async () => {
     if (Object.keys(state.historyContentList).length === 0) {
         let nowtime = Math.floor(Date.now() / 1000)
-        const temps = await getByTimeIndex(props.db, "message", "CreateTime", nowtime - 24 * 3600 * 30, nowtime)
+        const temps = await getByTimeIndex(props.db, "message", "createTime", nowtime - 24 * 3600 * 30, nowtime)
         for (let temp of temps) {
             const msgData = temp as unknown as MsgData
-            const rkey = getKey(msgData.MsgType, msgData.FromId, msgData.ToId)
+            const rkey = getKey(msgData.msgType, msgData.fromId, msgData.toId)
             if (!state.historyContentList.hasOwnProperty(rkey)) {
                 state.historyContentList[rkey] = []
             }
-            msgData.Avatar = await getImg(props.db, msgData.Avatar)
-            if (inArray(msgData.MsgMedia, [2, 3, 4, 5, 6]) && msgData.Content.Url) {
-                msgData.Content.Url = await getImg(props.db, msgData.Content.Url)
+            msgData.avatar = await getImg(props.db, msgData.avatar)
+            if (inArray(msgData.msgMedia, [2, 3, 4, 5, 6]) && msgData.content.url) {
+                msgData.content.url = await getImg(props.db, msgData.content.url)
             }
             state.historyContentList[rkey].push(msgData)
         }
@@ -241,22 +241,22 @@ const setChatList = async () => {
 
 
 const getContent = (item: MsgData) => {
-    if (inArray(item.MsgMedia, [1, 10, 11, 12, 13])) {
-        return item.Content.Data
+    if (inArray(item.msgMedia, [1, 10, 11, 12, 13])) {
+        return item.content.data
     } else {
-        return item.Content.Url
+        return item.content.url
     }
 }
 
 const sendEmojsMessage = (item: string) => {
-    const content = { "Url": item }
-    sendMessage({ Content: content, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 6, MsgType: props.talkData.msgType });
+    const content = { "url": item }
+    sendMessage({ content: content, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 6, msgType: props.talkData.msgType });
     state.isShowSmile = !state.isShowSmile;
 }
 
 const sendTextMessage = () => {
-    const content = { "Data": state.input }
-    sendMessage({ Content: content, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 1, MsgType: props.talkData.msgType });
+    const content = { "data": state.input }
+    sendMessage({ content: content, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 1, msgType: props.talkData.msgType });
     state.input = ""
     changeInput()
 }
@@ -266,8 +266,8 @@ const handleSuccessImage = (file: any) => {
     const formData = new FormData()
     formData.append('file', file.file)
     upload(formData).then((response: any) => {
-        const content = { "Url": response.data, "Name": file.file.name }
-        sendMessage({ Content: content, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 2, MsgType: props.talkData.msgType });
+        const content = { "url": response.data, "name": file.file.name }
+        sendMessage({ content: content, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 2, msgType: props.talkData.msgType });
         state.isShowPlugin = false
     });
 }
@@ -276,8 +276,8 @@ const handleSuccessFile = (file: any) => {
     const formData = new FormData()
     formData.append('file', file.file)
     upload(formData).then((response: any) => {
-        const content = { "Url": response.data, "Name": file.file.name }
-        sendMessage({ Content: content, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 5, MsgType: props.talkData.msgType });
+        const content = { "url": response.data, "name": file.file.name }
+        sendMessage({ content: content, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 5, msgType: props.talkData.msgType });
         state.isShowPlugin = false
     });
 }
@@ -286,8 +286,8 @@ const handleSuccessAudio = (file: any) => {
     const formData = new FormData()
     formData.append('file', file.file)
     upload(formData).then((response: any) => {
-        const content = { "Url": response.data, "Name": file.file.name }
-        sendMessage({ Content: content, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 3, MsgType: props.talkData.msgType });
+        const content = { "url": response.data, "name": file.file.name }
+        sendMessage({ content: content, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 3, msgType: props.talkData.msgType });
         state.isShowPlugin = false
     });
 }
@@ -295,8 +295,8 @@ const handleSuccessVideo = (file: any) => {
     const formData = new FormData()
     formData.append('file', file.file)
     upload(formData).then((response: any) => {
-        const content = { "Url": response.data, "Name": file.file.name }
-        sendMessage({ Content: content, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 4, MsgType: props.talkData.msgType });
+        const content = { "url": response.data, "name": file.file.name }
+        sendMessage({ content: content, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 4, msgType: props.talkData.msgType });
         state.isShowPlugin = false
     });
 }
@@ -308,34 +308,34 @@ const sendMessage = async (data: any) => {
         emit("update-parameter-talk")
         return
     }
-    if (data.MsgType == 4) {
+    if (data.msgType == 4) {
         console.log("sendMessage", JSON.parse(jsonString))
     }
 
     props.socket.send(jsonString);
-    if (!inArray(data.MsgType, [1, 2])) {
+    if (!inArray(data.msgType, [1, 2])) {
         return
     }
 
-    data.Avatar = state.selftUserInfo.Avatar
-    data.CreateTime = Math.floor(new Date().getTime() / 1000)
+    data.avatar = state.selftUserInfo.avatar
+    data.createTime = Math.floor(new Date().getTime() / 1000)
 
     saveMessage(props.db, data)
 
-    const rkey = getKey(props.talkData.msgType, state.selftUserInfo.Uid, props.talkData.toId)
+    const rkey = getKey(props.talkData.msgType, state.selftUserInfo.uid, props.talkData.toId)
     if (!state.historyContentList.hasOwnProperty(rkey)) {
         state.historyContentList[rkey] = []
     }
     const len = state.historyContentList[rkey].length
-    data.Avatar = await getImg(props.db, data.Avatar)
-    if (inArray(data.MsgMedia, [6]) && data.Content.Url) {
-        data.Content.Url = await getImg(props.db, data.Content.Url)
+    data.avatar = await getImg(props.db, data.avatar)
+    if (inArray(data.msgMedia, [6]) && data.content.Url) {
+        data.content.Url = await getImg(props.db, data.content.Url)
     }
     state.historyContentList[rkey].push(data)
     emit("update-parameter-talk-msg", data)
     setTimeout(setScroll, 1);  // 1毫秒后滚动
-    if (inArray(data.MsgMedia, [2, 3, 4, 5]) && data.Content.Url) {
-        state.historyContentList[rkey][len].Content.Url = await getImg(props.db, data.Content.Url)
+    if (inArray(data.msgMedia, [2, 3, 4, 5]) && data.content.Url) {
+        state.historyContentList[rkey][len].content.url = await getImg(props.db, data.content.url)
     }
 }
 1
@@ -344,39 +344,39 @@ const onMessage = async (event: any) => {
     const data = JSON.parse(event.data);
     console.log("onMessage", event.data)
 
-    const userInfo = await getItemById(props.db, "users", data.FromId)
-    data.Avatar = userInfo.Avatar
+    const userInfo = await getItemById(props.db, "users", data.fromId)
+    data.avatar = userInfo.avatar
 
     saveMessage(props.db, data)
 
-    const rkey = getKey(data.MsgType, data.FromId, data.ToId)
+    const rkey = getKey(data.msgType, data.fromId, data.toId)
     if (!state.historyContentList.hasOwnProperty(rkey)) {
         state.historyContentList[rkey] = []
     }
     const len = state.historyContentList[rkey].length
 
-    data.Avatar = await getImg(props.db, data.Avatar)
-    if (inArray(data.MsgMedia, [6]) && data.Content.Url) {
-        data.Content.Url = await getImg(props.db, data.Content.Url)
+    data.avatar = await getImg(props.db, data.avatar)
+    if (inArray(data.msgMedia, [6]) && data.content.Url) {
+        data.content.Url = await getImg(props.db, data.content.Url)
     }
     state.historyContentList[rkey].push(data)
 
     let num: number = 1
-    if (data.MsgType == 1) {
-        if (data.FromId == props.talkData.toId) {
+    if (data.msgType == 1) {
+        if (data.fromId == props.talkData.toId) {
             num = 0
         }
     }
-    if (data.MsgType == 2) {
-        if (data.ToId == props.talkData.toId) {
+    if (data.msgType == 2) {
+        if (data.toId == props.talkData.toId) {
             num = 0
         }
     }
-    emit("update-parameter-talk-tips", data.MsgType, num)
+    emit("update-parameter-talk-tips", data.msgType, num)
     setTimeout(setScroll, 1);  // 1毫秒后滚动
 
-    if (inArray(data.MsgMedia, [2, 3, 4, 5]) && data.Content.Url) {
-        state.historyContentList[rkey][len].Content.Url = await getImg(props.db, data.Content.Url)
+    if (inArray(data.msgMedia, [2, 3, 4, 5]) && data.content.Url) {
+        state.historyContentList[rkey][len].content.Url = await getImg(props.db, data.content.Url)
     }
 }
 
@@ -387,11 +387,11 @@ const clearMessage = (msgType: number, fromId: number, toId: number) => {
     const rkey = getKey(msgType, fromId, toId)
     state.historyContentList[rkey] = []
     if (msgType == 1) {
-        deleteByMultipleIndexes(props.db, 'message', [{ indexName: "MsgType", value: msgType }, { indexName: "FromId", value: fromId }, { indexName: "ToId", value: toId }])
-        deleteByMultipleIndexes(props.db, 'message', [{ indexName: "MsgType", value: msgType }, { indexName: "FromId", value: toId }, { indexName: "ToId", value: fromId }])
+        deleteByMultipleIndexes(props.db, 'message', [{ indexName: "msgType", value: msgType }, { indexName: "fromId", value: fromId }, { indexName: "toId", value: toId }])
+        deleteByMultipleIndexes(props.db, 'message', [{ indexName: "msgType", value: msgType }, { indexName: "fromId", value: toId }, { indexName: "toId", value: fromId }])
     }
     if (msgType == 2) {
-        deleteByMultipleIndexes(props.db, 'message', [{ indexName: "MsgType", value: msgType }, { indexName: "ToId", value: toId }])
+        deleteByMultipleIndexes(props.db, 'message', [{ indexName: "msgType", value: msgType }, { indexName: "toId", value: toId }])
     }
 }
 

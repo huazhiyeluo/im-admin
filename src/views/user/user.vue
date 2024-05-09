@@ -50,9 +50,9 @@ onMounted(() => {
 });
 const init = () => {
     state.selftUserInfo = Session.get('userInfo')
-    state.personInfo.uid = state.selftUserInfo.Uid
-    state.personInfo.username = state.selftUserInfo.Username
-    state.personInfo.info = state.selftUserInfo.Info
+    state.personInfo.uid = state.selftUserInfo.uid
+    state.personInfo.username = state.selftUserInfo.username
+    state.personInfo.info = state.selftUserInfo.info
 };
 
 
@@ -66,19 +66,19 @@ const handleSuccessImage = (file:any) => {
 
 const doPersonInfo = () => {
     if (state.personInfo.username == ''){
-        state.personInfo.username = state.selftUserInfo.Username
+        state.personInfo.username = state.selftUserInfo.username
     }
     if (state.personInfo.avatar == ''){
-        state.personInfo.avatar = state.selftUserInfo.Avatar
+        state.personInfo.avatar = state.selftUserInfo.avatar
     }
     let updateData = JSON.parse(JSON.stringify(state.personInfo));
-    updateData.uid = state.selftUserInfo.Uid
+    updateData.uid = state.selftUserInfo.uid
     editUser(updateData).then((response: any) => {
         if (response.code == 0) {
             showSuccessToast('保存成功');
-            state.selftUserInfo.Avatar = response.data.Avatar;
-            state.selftUserInfo.Username = response.data.Username;
-            state.selftUserInfo.Info = response.data.Info;
+            state.selftUserInfo.avatar = response.data.avatar;
+            state.selftUserInfo.username = response.data.username;
+            state.selftUserInfo.info = response.data.info;
             Session.set('userInfo', state.selftUserInfo)
             emit("update-parameter-person-user")
         } else {

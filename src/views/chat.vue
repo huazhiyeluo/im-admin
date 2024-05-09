@@ -186,7 +186,7 @@ const handleVisibilityChange = () => {
 
 const init = async () => {
     state.selftUserInfo = Session.get('userInfo')
-    if (!state.selftUserInfo || !state.selftUserInfo.Uid) {
+    if (!state.selftUserInfo || !state.selftUserInfo.uid) {
         Session.clear();
         nextTick()
         state.socket = null
@@ -197,19 +197,19 @@ const init = async () => {
     heartbeatTimer.value = setInterval(() => { heartbeat() }, 10000);
 
     //设置indexedDB
-    const dbName = `chat_${state.selftUserInfo.Uid}`
+    const dbName = `chat_${state.selftUserInfo.uid}`
 
     const version = 1;
     const objectStores = [
-        { name: 'groups', keyPath: 'GroupId', indexes: [{ name: 'GroupId', keyPath: 'GroupId', options: { unique: true } }] },
-        { name: 'group_members', keyPath: 'Id', indexes: [{ name: 'GroupId', keyPath: 'GroupId' }, { name: 'MemberId', keyPath: 'MemberId' }] },
-        { name: 'users', keyPath: 'Uid', indexes: [{ name: 'Uid', keyPath: 'Uid', options: { unique: true } }] },
-        { name: 'message', keyPath: 'Id', indexes: [{ name: 'CreateTime', keyPath: 'CreateTime' }, { name: 'FromId', keyPath: 'FromId' }, { name: 'ToId', keyPath: 'ToId' }, { name: 'MsgType', keyPath: 'MsgType' }] },
-        { name: 'apply', keyPath: 'Id', indexes: [{ name: 'OperateTime', keyPath: 'OperateTime' }, { name: 'Type', keyPath: 'Type' }] },
-        { name: 'file', keyPath: 'Url', indexes: [{ name: 'Url', keyPath: 'Url' }, { name: 'Data', keyPath: 'Data' }] },
+        { name: 'groups', keyPath: 'groupId', indexes: [{ name: 'groupId', keyPath: 'groupId', options: { unique: true } }] },
+        { name: 'group_members', keyPath: 'Id', indexes: [{ name: 'groupId', keyPath: 'groupId' }, { name: 'memberId', keyPath: 'memberId' }] },
+        { name: 'users', keyPath: 'uid', indexes: [{ name: 'uid', keyPath: 'uid', options: { unique: true } }] },
+        { name: 'message', keyPath: 'id', indexes: [{ name: 'createTime', keyPath: 'createTime' }, { name: 'fromId', keyPath: 'fromId' }, { name: 'toId', keyPath: 'toId' }, { name: 'msgType', keyPath: 'msgType' }] },
+        { name: 'apply', keyPath: 'id', indexes: [{ name: 'operateTime', keyPath: 'operateTime' }, { name: 'type', keyPath: 'type' }] },
+        { name: 'file', keyPath: 'url', indexes: [{ name: 'url', keyPath: 'url' }, { name: 'data', keyPath: 'data' }] },
     ];
     state.db = await openDB(dbName, version, objectStores);
-    saveUser(state.db, { Uid: state.selftUserInfo.Uid, Username: state.selftUserInfo.Username, Avatar: state.selftUserInfo.Avatar, IsOnline: true })
+    saveUser(state.db, { uid: state.selftUserInfo.uid, username: state.selftUserInfo.username, avatar: state.selftUserInfo.avatar, isOnline: true })
 };
 
 
@@ -239,10 +239,10 @@ const clickLeft = () => {
 const onFriendSelect = async (action: any, index: number) => {
     console.log("onFriendSelect", action, index)
     if (index == 0) {
-        onFriendDel(state.selftUserInfo.Uid, state.talkData.toId)
+        onFriendDel(state.selftUserInfo.uid, state.talkData.toId)
     }
     if (index == 1) {
-        onFriendClear(state.selftUserInfo.Uid, state.talkData.toId)
+        onFriendClear(state.selftUserInfo.uid, state.talkData.toId)
     }
 }
 
@@ -271,7 +271,7 @@ const onGroupOpen = async () => {
     }
     state.groupActions[0].text = "退出群聊"
     const temp = await getItemById(state.db, "groups", state.talkData.toId)
-    if (temp.OwnerUid == state.selftUserInfo.Uid) {
+    if (temp.Owneruid == state.selftUserInfo.uid) {
         state.groupActions[0].text = "解散群聊"
     }
 }
@@ -279,10 +279,10 @@ const onGroupOpen = async () => {
 const onGroupSelect = async (action: any, index: number) => {
     console.log("onFriendSelect", action, index)
     if (index == 0) {
-        onGroupQuit(state.selftUserInfo.Uid, state.talkData.toId)
+        onGroupQuit(state.selftUserInfo.uid, state.talkData.toId)
     }
     if (index == 1) {
-        onGroupClear(state.selftUserInfo.Uid, state.talkData.toId)
+        onGroupClear(state.selftUserInfo.uid, state.talkData.toId)
     }
 }
 
@@ -322,7 +322,7 @@ const clearMsg = () => {
 const initWebsocket = () => {
     console.log("启动服务器连接")
 
-    state.socket = new WebSocket(import.meta.env.VITE_WS_URL + "/chat?uid=" + state.selftUserInfo.Uid);
+    state.socket = new WebSocket(import.meta.env.VITE_WS_URL + "/chat?uid=" + state.selftUserInfo.uid);
 
     // 处理连接打开事件
     state.socket.addEventListener("open", onOpen);
@@ -370,7 +370,7 @@ const heartbeat = () => {
         return
     }
     if (state.socket.readyState == 1) {
-        TalkRef.value.sendMessage({ FromId: state.selftUserInfo.Uid, Content: { "Data": "心跳" }, MsgMedia: 0, MsgType: 0 })
+        TalkRef.value.sendMessage({ fromId: state.selftUserInfo.uid, content: { "data": "心跳" }, msgMedia: 0, msgType: 0 })
     }
 }
 
@@ -378,40 +378,42 @@ const heartbeat = () => {
 const onMessage = (event: any) => {
     const data = JSON.parse(event.data);
     console.log("onMessage-parent", data);
-    if (inArray(data.MsgType, [1, 2])) {
+    if (inArray(data.msgType, [1, 2])) {
         // 处理接收到的消息
         TalkRef.value.onMessage(event);
         let num: number = 1
-        if (data.MsgType == 1) {
-            if (data.FromId == state.talkData.toId) {
+        if (data.msgType == 1) {
+            if (data.fromId == state.talkData.toId) {
                 num = 0
             }
             FriendRef.value.loadFriendMsg(data, num)
         }
-        if (data.MsgType == 2) {
-            if (data.ToId == state.talkData.toId) {
+        if (data.msgType == 2) {
+            if (data.toId == state.talkData.toId) {
                 num = 0
             }
             GroupRef.value.loadGroupMsg(data, num)
         }
-    } else if (inArray(data.MsgType, [3])) {
-        if (data.MsgMedia == 10) {
+    } else if (inArray(data.msgType, [3])) {
+        console.log("onMessage-parent-3", data);
+        if (data.msgMedia == 10) {
             loadDisconnect()
         }
-        if (inArray(data.MsgMedia, [11, 12])) {
+        if (inArray(data.msgMedia, [11, 12])) {
             loadFriendStatus(data)
         }
-        if (inArray(data.MsgMedia, [13])) {
+        if (inArray(data.msgMedia, [13])) {
             loadFriendInfo(data)
         }
-        if (inArray(data.MsgMedia, [21, 22, 23, 24])) {
+        if (inArray(data.msgMedia, [21, 22, 23, 24])) {
+            console.log("onMessage-parent-3-21", data);
             loadFriendManage(data)
         }
-        if (inArray(data.MsgMedia, [30, 31, 32, 33, 34, 35])) {
+        if (inArray(data.msgMedia, [30, 31, 32, 33, 34, 35])) {
             loadGroupManage(data)
         }
-    } else if (inArray(data.MsgType, [4])) {
-        if (inArray(data.MsgMedia, [0, 1, 2, 3, 4, 5])) {
+    } else if (inArray(data.msgType, [4])) {
+        if (inArray(data.msgMedia, [0, 1, 2, 3, 4, 5])) {
             loadPhoneManage(data)
         }
     }
@@ -427,14 +429,14 @@ const loadDisconnect = () => {
 }
 // 2-1、上线、下线
 const loadFriendStatus = (data: any) => {
-    if (data.ToId == state.selftUserInfo.Uid) {
+    if (data.toId == state.selftUserInfo.uid) {
         FriendRef.value.loadFriendStatus(data)
     }
 }
 
 // 2-2、用户信息
 const loadFriendInfo = (data: any) => {
-    if (data.ToId == state.selftUserInfo.Uid) {
+    if (data.toId == state.selftUserInfo.uid) {
         FriendRef.value.loadFriendInfo(data)
     }
 }
@@ -442,9 +444,11 @@ const loadFriendInfo = (data: any) => {
 
 // 3、好友增删查改
 const loadFriendManage = (data: any) => {
-    if (inArray(data.MsgMedia, [21, 22, 23])) {  //21 添加好友 //22成功添加好友 //23拒绝添加好友
+    console.log("onMessage-parent-3-21", data);
+    if (inArray(data.msgMedia, [21, 22, 23])) {  //21 添加好友 //22成功添加好友 //23拒绝添加好友
         MsgRef.value.loadMsgManage(data)
         if (state.showType != 5) {
+            console.log(1111);
             state.badge++
         }
     }
@@ -453,16 +457,16 @@ const loadFriendManage = (data: any) => {
 
 // 4、组增删查改
 const loadGroupManage = (data: any) => {
-    if (inArray(data.MsgMedia, [31, 32, 33])) {//31 添加群 //32成功添加群 //33拒绝添加群
+    if (inArray(data.msgMedia, [31, 32, 33])) {//31 添加群 //32成功添加群 //33拒绝添加群
         MsgRef.value.loadMsgManage(data)
         if (state.showType != 5) {
             state.badge++
         }
     }
 
-    if (data.MsgMedia == 35 && state.talkData.msgType == 2) {
+    if (data.msgMedia == 35 && state.talkData.msgType == 2) {
         const res = JSON.parse(data.Content.Data);
-        if (res.group.GroupId == state.talkData.toId) {
+        if (res.group.groupId == state.talkData.toId) {
             clickLeft()
         }
     }
@@ -485,11 +489,11 @@ const childOperateFriend = async (msgType: number, toId: number) => {
     }
     const temp = await getItemById(state.db, "users", toId)
 
-    const icon = await getImg(state.db, temp.Avatar)
+    const icon = await getImg(state.db, temp.avatar)
     state.talkData = {
         msgType: msgType,
         toId: toId,
-        name: temp.Username,
+        name: temp.username,
         icon: icon
     }
     state.showType = 1
@@ -504,7 +508,7 @@ const childOperateGroup = async (msgType: number, toId: number) => {
         return
     }
     const temp = await getItemById(state.db, "groups", toId)
-    const icon = await getImg(state.db, temp.Icon)
+    const icon = await getImg(state.db, temp.icon)
     state.talkData = {
         msgType: msgType,
         toId: toId,
@@ -512,7 +516,7 @@ const childOperateGroup = async (msgType: number, toId: number) => {
         icon: icon
     }
 
-    const contacts = await getByIndex(state.db, "group_members", 'GroupId', toId)
+    const contacts = await getByIndex(state.db, "group_members", 'groupId', toId)
     if (contacts.length == 0) {
         const response = await getGroupUser({ groupId: toId });
         for (const friend of response.data) {
@@ -552,8 +556,8 @@ const childOperateTalkPhone = async (toId: number) => {
     state.talkData = {
         msgType: 1,
         toId: toId,
-        name: temp.Username,
-        icon: temp.Avatar
+        name: temp.username,
+        icon: temp.avatar
     }
     state.isShowPhone = true
     PhoneRef.value.goPhone()
@@ -562,10 +566,10 @@ const childOperateTalkPhone = async (toId: number) => {
 
 // 本地消息处理
 const childOperateTalkMsg = (data: MsgData) => {
-    if (data.MsgType == 1) {
+    if (data.msgType == 1) {
         FriendRef.value.loadFriendMsg(data, 0)
     }
-    if (data.MsgType == 2) {
+    if (data.msgType == 2) {
         GroupRef.value.loadGroupMsg(data, 0)
     }
 }
@@ -618,8 +622,8 @@ const childOperatePhoneRequest = async (toId: number) => {
     state.talkData = {
         msgType: 1,
         toId: toId,
-        name: temp.Username,
-        icon: temp.Avatar
+        name: temp.username,
+        icon: temp.avatar
     }
     state.isShowPhone = true
 }

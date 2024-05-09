@@ -3,8 +3,8 @@
         <ul>
             <!-- 个人头像 -->
             <li @click="setPersonInfo" class="my-person">
-                <van-image width="50" height="50" round :src="state.selftUserInfo.Avatar" />
-                <span>{{ state.selftUserInfo.Username }} [{{ state.selftUserInfo.Uid }}]</span>
+                <van-image width="50" height="50" round :src="state.selftUserInfo.avatar" />
+                <span>{{ state.selftUserInfo.username }} [{{ state.selftUserInfo.uid }}]</span>
             </li>
             <!-- 添加好友 -->
             <li @click="goAddFriend" class="friend">添加好友</li>
@@ -77,7 +77,7 @@ const goAddFriend = async () => {
 }
 const doAddFriend = async () => {
     let updateData = JSON.parse(JSON.stringify(state.addFriendForm));
-    updateData["fromId"] = state.selftUserInfo.Uid
+    updateData["fromId"] = state.selftUserInfo.uid
     addFriend(updateData).then((response: any) => {
         if (response.code == 0) {
             showSuccessToast('添加成功');
@@ -99,7 +99,7 @@ const goJoinGroup = async () => {
 
 const doJoinGroup = async () => {
     let updateData = JSON.parse(JSON.stringify(state.joinGroupForm));
-    updateData["fromId"] = state.selftUserInfo.Uid
+    updateData["fromId"] = state.selftUserInfo.uid
     joinGroup(updateData).then((response: any) => {
         if (response.code == 0) {
             showSuccessToast('加入成功');

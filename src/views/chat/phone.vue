@@ -74,55 +74,55 @@ const init = ()=>{
 
 const loadPhoneManage = async (data: any) => {
     console.log("loadPhoneManage")
-    if (data.MsgMedia == 0) {   //收到语音通话 - 请求
-        emit("update-parameter-phone-request" , data.FromId)
-        state.sendUid = data.FromId
+    if (data.msgMedia == 0) {   //收到语音通话 - 请求
+        emit("update-parameter-phone-request" , data.fromId)
+        state.sendUid = data.fromId
         state.showType = 2;
     }
-    if (data.MsgMedia == 1) {   //收到语音通话 - 挂断
+    if (data.msgMedia == 1) {   //收到语音通话 - 挂断
         state.showType = 0;
         leave()
     }
-    if (data.MsgMedia == 2) {   //收到语音通话 - 通话
+    if (data.msgMedia == 2) {   //收到语音通话 - 通话
         state.showType = 3;
         await startConection()
         await startVideoCall()
         state.times = 0
         phoneTimer.value = setInterval(() => { state.times++ }, 1000);
     }
-    if (data.MsgMedia == 3) {   //收到语音通话 - 候选人
-        handleIceCandidate(data.Content.Data)
+    if (data.msgMedia == 3) {   //收到语音通话 - 候选人
+        handleIceCandidate(data.content.data)
     }
-    if (data.MsgMedia == 4) {   //收到语音通话 - OFFER
-        handleOffer(data.Content.Data)
+    if (data.msgMedia == 4) {   //收到语音通话 - OFFER
+        handleOffer(data.content.data)
     }
-    if (data.MsgMedia == 5) {   //收到语音通话 - ANSWER
-        handleAnswer(data.Content.Data)
+    if (data.msgMedia == 5) {   //收到语音通话 - ANSWER
+        handleAnswer(data.content.data)
     }
 }
 
 //1、拨打语音通话
 const goPhone = async () => {
     state.showType = 1;
-    state.sendUid = state.selftUserInfo.Uid
-    emit("update-parameter-phone-send" , { Content: { Data: "" }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 0, MsgType: 4 })
+    state.sendUid = state.selftUserInfo.uid
+    emit("update-parameter-phone-send" , { content: { data: "" }, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 0, msgType: 4 })
 }
 //2-1、挂断语音通话(未接通)
 const quitPhone = async () => {
     state.showType = 0;
     leave()
-    emit("update-parameter-phone-send" , { Content: { Data: "" }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 1, MsgType: 4 });
+    emit("update-parameter-phone-send" , { content: { data: "" }, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 1, msgType: 4 });
 
-    const content = { "Data": "挂断电话" }
-    emit("update-parameter-phone-send" , { Content: content, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 13, MsgType: 1 });
+    const content = { "data": "挂断电话" }
+    emit("update-parameter-phone-send" , { content: content, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 13, msgType: 1 });
 
 }
 
 //2-2、挂断语音通话(接通)
 const quitPhoneDone = async () => {
     state.showType = 0;
-    emit("update-parameter-phone-send" , { Content: { Data: "" }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 1, MsgType: 4 });
-    emit("update-parameter-phone-send" , { Content: { Data: `${state.times}` }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId , MsgMedia: 12, MsgType: 1 });
+    emit("update-parameter-phone-send" , { content: { data: "" }, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 1, msgType: 4 });
+    emit("update-parameter-phone-send" , { content: { data: `${state.times}` }, fromId: state.selftUserInfo.uid, toId: props.talkData.toId , msgMedia: 12, msgType: 1 });
     leave()
     clearInterval(phoneTimer.value)
 }
@@ -134,7 +134,7 @@ const doPhone = async () => {
     await startConection()
     await startVideoCall()
     // 发送offer给接收方  
-    emit("update-parameter-phone-send" , { Content: { Data: "" }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 2, MsgType: 4 });
+    emit("update-parameter-phone-send" , { content: { data: "" }, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 2, msgType: 4 });
     state.times = 0
     phoneTimer.value = setInterval(() => { state.times++ }, 1000);
 }
@@ -188,14 +188,19 @@ const startVideoCall = async () => {
             frameRate: 60  // 设置理想的帧率
         }, 
         audio: { 
-            echoCancellation: true, // 启用回声消除
+            sampleRate: 44100,
+            sampleSize: 16,
+            channelCount: 2,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
         } 
     }
     const localStream = await navigator.mediaDevices.getUserMedia(constraints);
 
     localStream.getTracks().forEach(track => {
         if (peerConnection.value) {
-            console.log("getTracks", state.selftUserInfo.Uid)
+            console.log("getTracks", state.selftUserInfo.uid)
             peerConnection.value.addTrack(track, localStream);
         }
     })
@@ -212,7 +217,7 @@ const startVideoCall = async () => {
     const offer = await peerConnection.value.createOffer(offerOptions);
     await peerConnection.value.setLocalDescription(offer);
 
-    emit("update-parameter-phone-send" , { Content: { Data: JSON.stringify(offer) }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 4, MsgType: 4 });
+    emit("update-parameter-phone-send" , { content: { data: JSON.stringify(offer) }, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 4, msgType: 4 });
 
 }
 
@@ -268,7 +273,7 @@ const startConection = async () => {
             console.log("onicecandidate")
             if (event.candidate) {
                 // 发送ICE候选给接收方  
-                emit("update-parameter-phone-send" , { Content: { Data: JSON.stringify(event.candidate) }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 3, MsgType: 4 });
+                emit("update-parameter-phone-send" , { content: { data: JSON.stringify(event.candidate) }, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 3, msgType: 4 });
             }
         };
 
@@ -322,7 +327,7 @@ const sendAnswer = async () => {
     if (peerConnection.value) {
         let answer = await peerConnection.value.createAnswer()
         await peerConnection.value.setLocalDescription(answer);
-        emit("update-parameter-phone-send" , { Content: { Data: JSON.stringify(answer) }, FromId: state.selftUserInfo.Uid, ToId: props.talkData.toId, MsgMedia: 5, MsgType: 4 });
+        emit("update-parameter-phone-send" , { content: { data: JSON.stringify(answer) }, fromId: state.selftUserInfo.uid, toId: props.talkData.toId, msgMedia: 5, msgType: 4 });
     }
 };
 

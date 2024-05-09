@@ -1,68 +1,68 @@
 export interface UserInfo {
-    Uid: number;
-    Username: string;
-    Avatar: string;
-    Info: string;
-    Email: string;
-    Phone: string;
+    uid: number;
+    username: string;
+    avatar: string;
+    info: string;
+    email: string;
+    phone: string;
 }
 
 export interface FriendData {
-    Uid: number;
-    Username: string;
-    Avatar: string;
-    IsOnline: boolean;
-    OperateTime:number;
-    Tips:number;
-    MsgMedia: number;
-    Content: ChildContent;
+    uid: number;
+    username: string;
+    avatar: string;
+    isOnline: boolean;
+    operateTime:number;
+    tips:number;
+    msgMedia: number;
+    content: ChildContent;
 }
 
 export interface GroupData {
-    GroupId: number;
-    OwnerUid: number;
-    Name: string;
-    Icon: string;
-    Info: string;
-    Num: boolean;
-    OperateTime:number;
-    Tips:number;
-    MsgMedia: number;
-    Content: ChildContent;
+    groupId: number;
+    ownerUid: number;
+    name: string;
+    icon: string;
+    info: string;
+    num: boolean;
+    operateTime:number;
+    tips:number;
+    msgMedia: number;
+    content: ChildContent;
 }
 
 export interface ChildContent {
-    Data: string,
-    Name: string;
-    Url: string;
+    data: string,
+    name: string;
+    url: string;
 }
 
 
 export interface MsgData {
-    FromId: number;
-    ToId: number;
-    MsgMedia: number;
-    MsgType: number;
-    Content: ChildContent;
-    Avatar: string;
-    CreateTime: number;
+    fromId: number;
+    toId: number;
+    msgMedia: number;
+    msgType: number;
+    content: ChildContent;
+    avatar: string;
+    createTime: number;
 }
 
 export interface ApplyData {
-    Id: number;
-    FromId: number;
-    FromName: string;
-    FromIcon: string;
-    ToId: number;
-    ToName: string;
-    ToIcon: string;
-    Type: number;
-    Reason: string;
-    Status: number;
-    OperateTime:number;
+    id: number;
+    fromId: number;
+    fromName: string;
+    fromIcon: string;
+    toId: number;
+    toName: string;
+    toIcon: string;
+    type: number;
+    reason: string;
+    status: number;
+    operateTime:number;
 }
 
 export interface Emojs {
-    Url: string;
-    Newurl: string;
+    url: string;
+    newurl: string;
 }

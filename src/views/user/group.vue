@@ -98,7 +98,7 @@ const handleSuccessImage = (file: any) => {
 
 const doPersonInfo = () => {
     let updateData = JSON.parse(JSON.stringify(state.personInfo));
-    updateData.ownerUid = state.selftUserInfo.Uid
+    updateData.ownerUid = state.selftUserInfo.uid
     editGroup(updateData).then((response: any) => {
         if (response.code == 0) {
             showSuccessToast('创建成功');

@@ -3,46 +3,46 @@ import { getItemById, updateItem, addItem, deleteByMultipleIndexes } from './ind
 import { deleteItem, type MyDatabase } from './indexedDB';
 
 export async function saveUser(db: MyDatabase, data: any) {
-    if (!data.OperateTime) {
-        data.OperateTime = 0
+    if (!data.operateTime) {
+        data.operateTime = 0
     }
-    if (!data.Tips) {
-        data.Tips = 0
+    if (!data.tips) {
+        data.tips = 0
     }
-    if (!data.MsgMedia) {
-        data.MsgMedia = 1
+    if (!data.msgMedia) {
+        data.msgMedia = 1
     }
-    if (!data.Content) {
-        data.Content = { "Data": "", "Name": "", "Url": "" }
+    if (!data.content) {
+        data.content = { "data": "", "name": "", "url": "" }
     }
-    const temp = await getItemById(db, "users", data.Uid)
+    const temp = await getItemById(db, "users", data.uid)
     if (temp) {
-        await updateItem(db, "users", data.Uid, { Uid: data.Uid, Username: data.Username, Avatar: data.Avatar, IsOnline: data.IsOnline, OperateTime: data.OperateTime, Tips: data.Tips, MsgMedia: data.MsgMedia, Content: { "Data": data.Content.Data, "Name": data.Content.Name, "Url": data.Content.Url } });
+        await updateItem(db, "users", data.uid, { uid: data.uid, username: data.username, avatar: data.avatar, isOnline: data.isOnline, operateTime: data.operateTime, tips: data.tips, msgMedia: data.msgMedia, content: { "data": data.content.data, "name": data.content.name, "url": data.content.url } });
     } else {
-        await addItem(db, "users", { Uid: data.Uid, Username: data.Username, Avatar: data.Avatar, IsOnline: data.IsOnline, OperateTime: data.OperateTime, Tips: data.Tips, MsgMedia: data.MsgMedia, Content: { "Data": data.Content.Data, "Name": data.Content.Name, "Url": data.Content.Url } });
+        await addItem(db, "users", { uid: data.uid, username: data.username, avatar: data.avatar, isOnline: data.isOnline, operateTime: data.operateTime, tips: data.tips, msgMedia: data.msgMedia, content: { "data": data.content.data, "name": data.content.name, "url": data.content.url } });
     }
 }
 
 
 
 export async function saveGroup(db: MyDatabase, data: any) {
-    if (!data.OperateTime) {
-        data.OperateTime = 0
+    if (!data.operateTime) {
+        data.operateTime = 0
     }
-    if (!data.Tips) {
-        data.Tips = 0
+    if (!data.tips) {
+        data.tips = 0
     }
-    if (!data.MsgMedia) {
-        data.MsgMedia = 1
+    if (!data.msgMedia) {
+        data.msgMedia = 1
     }
-    if (!data.Content) {
-        data.Content = { "Data": "", "Name": "", "Url": "" }
+    if (!data.content) {
+        data.content = { "data": "", "name": "", "url": "" }
     }
-    const temp = await getItemById(db, "groups", data.GroupId)
+    const temp = await getItemById(db, "groups", data.groupId)
     if (temp) {
-        await updateItem(db, "groups", data.GroupId, { GroupId: data.GroupId, OwnerUid: data.OwnerUid, Name: data.Name, Icon: data.Icon, Info: data.Info, Num: data.Num, OperateTime: data.OperateTime, Tips: data.Tips, MsgMedia: data.MsgMedia, Content: { "Data": data.Content.Data, "Name": data.Content.Name, "Url": data.Content.Url } });
+        await updateItem(db, "groups", data.groupId, { groupId: data.groupId, ownerUid: data.ownerUid, name: data.name, icon: data.icon, info: data.info, Num: data.Num, operateTime: data.operateTime, tips: data.tips, msgMedia: data.msgMedia, content: { "data": data.content.data, "name": data.content.name, "url": data.content.url } });
     } else {
-        await addItem(db, "groups", { GroupId: data.GroupId, OwnerUid: data.OwnerUid, Name: data.Name, Icon: data.Icon, Info: data.Info, Num: data.Num, OperateTime: data.OperateTime, Tips: data.Tips, MsgMedia: data.MsgMedia, Content: { "Data": data.Content.Data, "Name": data.Content.Name, "Url": data.Content.Url } });
+        await addItem(db, "groups", { groupId: data.groupId, ownerUid: data.ownerUid, name: data.name, icon: data.icon, info: data.info, Num: data.Num, operateTime: data.operateTime, tips: data.tips, msgMedia: data.msgMedia, content: { "data": data.content.data, "name": data.content.name, "url": data.content.url } });
     }
 }
 
@@ -52,12 +52,12 @@ export async function delGroup(db: MyDatabase, groupId: number) {
 
 
 export async function saveGroupUser(db: MyDatabase, groupId: number, data: any) {
-    const id = `${groupId}_${data.Uid}`
+    const id = `${groupId}_${data.uid}`
     const temp = await getItemById(db, "group_members", id)
     if (temp) {
-        await updateItem(db, "group_members", id, { GroupId: groupId, MemberId: data.Uid });
+        await updateItem(db, "group_members", id, { groupId: groupId, memberId: data.uid });
     } else {
-        await addItem(db, "group_members", { GroupId: groupId, MemberId: data.Uid });
+        await addItem(db, "group_members", { groupId: groupId, memberId: data.uid });
     }
     saveUser(db, data)
 }
@@ -68,33 +68,33 @@ export async function delGroupUser(db: MyDatabase, groupId: number, uid: number)
 }
 
 export async function delGroupAllUser(db: MyDatabase, groupId: number) {
-    await deleteByMultipleIndexes(db, 'group_members', [{ indexName: "GroupId", value: groupId }])
+    await deleteByMultipleIndexes(db, 'group_members', [{ indexName: "groupId", value: groupId }])
 }
 
 
 export async function saveApply(db: MyDatabase, data: ApplyData) {
-    const temp = await getItemById(db, "apply", data.Id)
+    const temp = await getItemById(db, "apply", data.id)
     if (temp) {
-        await updateItem(db, "apply", data.Id, { Id: data.Id, FromId: data.FromId, FromName: data.FromName, FromIcon: data.FromIcon, ToId: data.ToId, ToName: data.ToName, ToIcon: data.ToIcon, Type: data.Type, Status: data.Status, Reason: data.Reason, OperateTime: data.OperateTime });
+        await updateItem(db, "apply", data.id, { id: data.id, fromId: data.fromId, fromName: data.fromName, fromIcon: data.fromIcon, toId: data.toId, toName: data.toName, toIcon: data.toIcon, type: data.type, status: data.status, reason: data.reason, operateTime: data.operateTime });
     } else {
-        await addItem(db, "apply", { Id: data.Id, FromId: data.FromId, FromName: data.FromName, FromIcon: data.FromIcon, ToId: data.ToId, ToName: data.ToName, ToIcon: data.ToIcon, Type: data.Type, Status: data.Status, Reason: data.Reason, OperateTime: data.OperateTime });
+        await addItem(db, "apply", { id: data.id, fromId: data.fromId, fromName: data.fromName, fromIcon: data.fromIcon, toId: data.toId, toName: data.toName, toIcon: data.toIcon, type: data.type, status: data.status, reason: data.reason, operateTime: data.operateTime });
     }
 }
 
 export async function saveMessage(db: MyDatabase, data: any) {
-    if (!data.Content) {
-        data.Content = { "Data": "", "Name": "", "Url": "" }
+    if (!data.content) {
+        data.content = { "data": "", "name": "", "url": "" }
     }
-    if (!data.Content.Data) {
-        data.Content.Data = ""
+    if (!data.content.data) {
+        data.content.data = ""
     }
-    if (!data.Content.Name) {
-        data.Content.Name = ""
+    if (!data.content.name) {
+        data.content.name = ""
     }
-    if (!data.Content.Url) {
-        data.Content.Url = ""
+    if (!data.content.url) {
+        data.content.url = ""
     }
-    await addItem(db, "message", {FromId: data.FromId, ToId: data.ToId, Avatar: data.Avatar, MsgType: data.MsgType, MsgMedia: data.MsgMedia, Content: { "Data": data.Content.Data, "Name": data.Content.Name, "Url": data.Content.Url }, CreateTime: data.CreateTime })
+    await addItem(db, "message", {fromId: data.fromId, toId: data.toId, avatar: data.avatar, msgType: data.msgType, msgMedia: data.msgMedia, content: { "data": data.content.data, "name": data.content.name, "url": data.content.url }, createTime: data.createTime })
 }
 
 
@@ -114,9 +114,9 @@ export async function getImg(db: MyDatabase, url: string): Promise<string> {
     const temp = await getItemById(db, "file", url);
     if (!temp) {
         const blob = await urlToBlob(url);
-        await addItem(db, "file", { Url: url, Data: blob });
+        await addItem(db, "file", { url: url, data: blob });
     } else {
-        imgUrl = URL.createObjectURL(temp.Data);
+        imgUrl = URL.createObjectURL(temp.data);
     }
     return imgUrl;
 }
